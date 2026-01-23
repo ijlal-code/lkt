@@ -1,171 +1,235 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-    <title>LTK - {{ $ltk->LTK_No }}</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>Laporan LTK - {{ $ltk->LTK_No }}</title>
     <style>
-        body { font-family: Arial, sans-serif; font-size: 10pt; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 5px; }
-        td, th { border: 1px solid black; padding: 5px; vertical-align: top; }
-        
+        body {
+            font-family: 'DejaVu Sans', sans-serif; /* Support untuk simbol checklist */
+            font-size: 11px;
+            color: #000;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 4px;
+            vertical-align: top;
+        }
         .no-border { border: none !important; }
-        .no-border td { border: none !important; }
-        
-        .header-title { font-weight: bold; font-size: 14pt; text-align: center; }
-        .header-sub { font-size: 8pt; text-align: center; }
-        
-        .bg-gray { background-color: #f0f0f0; font-weight: bold; }
         .text-center { text-align: center; }
         .text-bold { font-weight: bold; }
-        
-        .check-box { display: inline-block; width: 12px; height: 12px; border: 1px solid #000; margin-right: 3px; text-align: center; line-height: 10px; font-size: 8px; }
-        .checked { background-color: #000; color: #fff; }
-
-        .signature-box { height: 60px; }
+        .header-logo { width: 60px; height: auto; }
+        .section-title {
+            background-color: #eee;
+            font-weight: bold;
+            text-transform: uppercase;
+            padding: 5px;
+        }
+        .checkbox-item { display: inline-block; margin-right: 15px; }
+        .signature-box { height: 60px; vertical-align: bottom; text-align: center; }
+        .field-label { font-weight: bold; font-size: 10px; color: #333; }
+        .field-value { margin-bottom: 4px; }
     </style>
 </head>
 <body>
 
-    <table style="border: 2px solid black;">
-        <tr>
-            <td width="15%" class="text-center" style="vertical-align: middle;">
-                <img src="{{ public_path('img/logo-tonasa.png') }}" width="60">
-            </td>
-            <td width="70%" class="text-center" style="vertical-align: middle;">
-                <div class="header-title">PT SEMEN TONASA</div>
-                <div class="header-sub">UNIT INTERNAL AUDIT</div>
-                <div style="font-size: 12pt; font-weight: bold; margin-top: 5px;">LAPORAN TEMUAN KETIDAKSESUAIAN (LTK)</div>
-            </td>
-            <td width="15%" class="text-center" style="vertical-align: middle;">
-                <img src="{{ public_path('img/logo-internal-audit.png') }}" width="60">
-                <br><span style="font-size: 8pt;">{{ $ltk->Kode_Form }}</span>
-            </td>
-        </tr>
-    </table>
-
     <table>
         <tr>
-            <td width="20%" class="bg-gray">LTK No.</td>
-            <td width="30%">{{ $ltk->LTK_No }}</td>
-            <td width="20%" class="bg-gray">Tipe Audit</td>
-            <td width="30%">{{ $ltk->Tipe_Audit_INT_OT }}</td>
-        </tr>
-        <tr>
-            <td class="bg-gray">No. Prosedur</td>
-            <td>{{ $ltk->Nomor_Prosedur }}</td>
-            <td class="bg-gray">Tanggal Audit</td>
-            <td>{{ $ltk->Tanggal_Audit ? \Carbon\Carbon::parse($ltk->Tanggal_Audit)->format('d-m-Y') : '-' }}</td>
-        </tr>
-    </table>
-
-    <table>
-        <tr>
-            <td width="15%" class="bg-gray">Kepada</td>
-            <td width="35%">{{ $ltk->Kepada }}</td>
-            <td width="15%" class="bg-gray">Penerbit (Auditor)</td>
-            <td width="35%">
-                1. {{ $ltk->Penerbit_1 }}<br>
-                2. {{ $ltk->Penerbit_2 }}
+            <td class="text-center" width="15%">
+                <img src="{{ public_path('img/logo-tonasa.png') }}" class="header-logo" alt="Logo Tonasa">
             </td>
-        </tr>
-        <tr>
-            <td class="bg-gray">Dept / Proses</td>
-            <td>{{ $ltk->Dept_Proses }}</td>
-            <td class="bg-gray">Tanggal Laporan</td>
-            <td>{{ $ltk->Tanggal_Laporan ? \Carbon\Carbon::parse($ltk->Tanggal_Laporan)->format('d-m-Y') : '-' }}</td>
-        </tr>
-    </table>
-
-    <table>
-        <tr>
-            <td colspan="4" class="bg-gray text-center">URAIAN KETIDAKSESUAIAN</td>
-        </tr>
-        <tr>
-            <td width="15%" class="text-bold">Gambaran</td>
-            <td colspan="3" style="height: 60px;">{{ $ltk->Gambaran_Ketidaksesuaian }}</td>
-        </tr>
-        <tr>
-            <td class="text-bold">Bukti Objektif</td>
-            <td colspan="3">{{ $ltk->Bukti_Objektif }}</td>
-        </tr>
-        <tr>
-            <td class="text-bold">Lokasi</td>
-            <td>{{ $ltk->Lokasi }}</td>
-            <td class="text-bold">Sumber Temuan</td>
-            <td>{{ $ltk->Sumber_Temuan }}</td>
-        </tr>
-        <tr>
-            <td class="text-bold">Ref. Standar</td>
-            <td colspan="3" style="font-size: 9pt;">
-                <span class="check-box {{ $ltk->Ref_ISO_9001 ? 'checked' : '' }}"></span> ISO 9001 &nbsp;
-                <span class="check-box {{ $ltk->Ref_ISO_14001 ? 'checked' : '' }}"></span> ISO 14001 &nbsp;
-                <span class="check-box {{ $ltk->Ref_SMK3 ? 'checked' : '' }}"></span> SMK3 &nbsp;
-                <span class="check-box {{ $ltk->Ref_ISO_45001 ? 'checked' : '' }}"></span> ISO 45001 &nbsp;
-                <span class="check-box {{ $ltk->Ref_LAB_17025 ? 'checked' : '' }}"></span> ISO 17025 &nbsp;
-                <span class="check-box {{ $ltk->Ref_ISO_50001 ? 'checked' : '' }}"></span> ISO 50001 &nbsp;
-                <span class="check-box {{ $ltk->Ref_SMKP_Minerba ? 'checked' : '' }}"></span> SMKP &nbsp;
-                <span class="check-box {{ $ltk->Ref_ISO_37001 ? 'checked' : '' }}"></span> ISO 37001
+            <td class="text-center" width="70%">
+                <h2 style="margin:5px 0;">PT SEMEN TONASA</h2>
+                <h3 style="margin:0;">{{ $ltk->Judul_Dokumen ?? 'LAPORAN TEMUAN KETIDAKSESUAIAN (LTK)' }}</h3>
             </td>
-        </tr>
-        <tr>
-            <td colspan="2" class="text-center">
-                Disetujui Auditor:<br>
-                <div class="signature-box"></div>
-                <b>{{ $ltk->Penerbit_1 }}</b>
-            </td>
-            <td colspan="2" class="text-center">
-                Diterima Auditee:<br>
-                <div class="signature-box"></div>
-                <b>{{ $ltk->Auditee_Nama ?? '(...................)' }}</b>
-            </td>
-        </tr>
-    </table>
-
-    <table>
-        <tr>
-            <td colspan="2" class="bg-gray text-center">RENCANA PERBAIKAN (Diisi oleh Auditee)</td>
-        </tr>
-        <tr>
-            <td width="20%" class="text-bold">Akar Masalah</td>
-            <td style="height: 50px;">{{ $ltk->Akar_Masalah }}</td>
-        </tr>
-        <tr>
-            <td class="text-bold">Tindakan Perbaikan</td>
-            <td style="height: 50px;">{{ $ltk->Rencana_Tindakan }}</td>
-        </tr>
-        <tr>
-            <td class="text-bold">Target Selesai</td>
-            <td>{{ $ltk->Tgl_Selesai_Tindakan ? \Carbon\Carbon::parse($ltk->Tgl_Selesai_Tindakan)->format('d-m-Y') : '-' }}</td>
-        </tr>
-    </table>
-
-    <table>
-        <tr>
-            <td colspan="4" class="bg-gray text-center">VERIFIKASI PENYELESAIAN (Diisi oleh Auditor)</td>
-        </tr>
-        <tr>
-            <td colspan="4" style="height: 50px;">
-                <b>Komentar:</b><br>
-                {{ $ltk->Komentar_Verifikasi }}
-            </td>
-        </tr>
-        <tr>
-            <td width="20%" class="text-bold">Status Temuan</td>
-            <td width="30%">
-                [{{ $ltk->Status_Temuan == 'Open' ? 'X' : ' ' }}] Open &nbsp;&nbsp;
-                [{{ $ltk->Status_Temuan == 'Closed' ? 'X' : ' ' }}] Closed
-            </td>
-            <td width="20%" class="text-bold">Tanggal Verifikasi</td>
-            <td width="30%">{{ $ltk->Tgl_Verifikasi ? \Carbon\Carbon::parse($ltk->Tgl_Verifikasi)->format('d-m-Y') : '-' }}</td>
-        </tr>
-        <tr>
-            <td colspan="4" class="text-center">
+            <td class="text-center" width="15%">
+                <img src="{{ public_path('img/logo-internal-audit.png') }}" class="header-logo" alt="Logo IA">
                 <br>
-                Verifikator (Auditor):<br>
-                <div class="signature-box"></div>
-                <b>{{ $ltk->Penerbit_1 }}</b>
+                <small>{{ $ltk->Kode_Form ?? 'FRM-IA-01' }}</small>
             </td>
         </tr>
     </table>
+
+    <table>
+        <tr>
+            <td width="50%">
+                <div class="field-label">LTK No:</div>
+                <div class="field-value">{{ $ltk->LTK_No }}</div>
+            </td>
+            <td width="50%">
+                <div class="field-label">Tanggal Audit:</div>
+                <div class="field-value">{{ $ltk->Tanggal_Audit }}</div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div class="field-label">Tipe Audit:</div>
+                <div class="field-value">{{ $ltk->Tipe_Audit_INT_OT }}</div>
+            </td>
+            <td>
+                <div class="field-label">Nomor Prosedur:</div>
+                <div class="field-value">{{ $ltk->Nomor_Prosedur }} (Tahun: {{ $ltk->Tahun }})</div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div class="field-label">Kepada (Auditee):</div>
+                <div class="field-value">{{ $ltk->Kepada }}</div>
+                <div class="field-label">Dept/Proses:</div>
+                <div class="field-value">{{ $ltk->Dept_Proses }}</div>
+            </td>
+            <td>
+                <div class="field-label">Auditor (Penerbit):</div>
+                <ol style="margin: 0; padding-left: 15px;">
+                    @if($ltk->Penerbit_1) <li>{{ $ltk->Penerbit_1 }}</li> @endif
+                    @if($ltk->Penerbit_2) <li>{{ $ltk->Penerbit_2 }}</li> @endif
+                    @if($ltk->Penerbit_3) <li>{{ $ltk->Penerbit_3 }}</li> @endif
+                </ol>
+            </td>
+        </tr>
+    </table>
+
+    <table>
+        <tr><td colspan="2" class="section-title">1. Uraian Ketidaksesuaian</td></tr>
+        <tr>
+            <td colspan="2">
+                <div class="field-label">Sumber Temuan:</div>
+                <div>
+                    {{ $ltk->Sumber_Temuan }} 
+                    @if($ltk->Sumber_Lainnya_Text) ({{ $ltk->Sumber_Lainnya_Text }}) @endif
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td width="100%" colspan="2">
+                <div class="field-label">Gambaran Ketidaksesuaian:</div>
+                <div style="min-height: 60px;">{{ $ltk->Gambaran_Ketidaksesuaian }}</div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div class="field-label">Lokasi:</div>
+                <div>{{ $ltk->Lokasi }}</div>
+            </td>
+            <td>
+                <div class="field-label">Bukti Objektif / Foto:</div>
+                <div>{{ $ltk->Bukti_Objektif ?? $ltk->Bukti_Objektif_Foto }}</div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <div class="field-label">Referensi Standar:</div>
+                <div style="font-size: 10px;">
+                    <span class="checkbox-item">{{ $ltk->Ref_ISO_9001 ? '☑' : '☐' }} ISO 9001</span>
+                    <span class="checkbox-item">{{ $ltk->Ref_ISO_14001 ? '☑' : '☐' }} ISO 14001</span>
+                    <span class="checkbox-item">{{ $ltk->Ref_SMK3 ? '☑' : '☐' }} SMK3</span>
+                    <span class="checkbox-item">{{ $ltk->Ref_ISO_45001 ? '☑' : '☐' }} ISO 45001</span>
+                    <br>
+                    <span class="checkbox-item">{{ $ltk->Ref_LAB_17025 ? '☑' : '☐' }} ISO/IEC 17025</span>
+                    <span class="checkbox-item">{{ $ltk->Ref_ISO_50001 ? '☑' : '☐' }} ISO 50001</span>
+                    <span class="checkbox-item">{{ $ltk->Ref_SMKP_Minerba ? '☑' : '☐' }} SMKP Minerba</span>
+                    <span class="checkbox-item">{{ $ltk->Ref_ISO_37001 ? '☑' : '☐' }} ISO 37001</span>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td class="text-center signature-box">
+                <br><br>
+                ( {{ $ltk->Paraf_Auditor }} )<br>
+                <strong>Paraf Auditor</strong>
+            </td>
+            <td class="text-center signature-box">
+                <br><br>
+                ( {{ $ltk->Inisial_Auditor }} )<br>
+                <strong>Inisial</strong>
+            </td>
+        </tr>
+    </table>
+
+    <table>
+        <tr><td colspan="2" class="section-title">2. Analisa Penyebab & Rencana Tindakan</td></tr>
+        <tr>
+            <td colspan="2">
+                <div class="field-label">Akar Masalah (Root Cause):</div>
+                <div style="min-height: 50px;">{{ $ltk->Akar_Masalah }}</div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <div class="field-label">Rencana Tindakan Perbaikan:</div>
+                <div style="min-height: 50px;">{{ $ltk->Rencana_Tindakan }}</div>
+            </td>
+        </tr>
+        <tr>
+            <td width="70%">
+                <div class="field-label">Auditee (Nama & Paraf):</div>
+                <br>
+                Nama: {{ $ltk->Auditee_Nama }} <span style="margin-left:20px;">Paraf: {{ $ltk->Paraf_Auditee }}</span>
+            </td>
+            <td width="30%">
+                <div class="field-label">Target Selesai:</div>
+                <div>{{ $ltk->Tgl_Selesai_Tindakan }}</div>
+            </td>
+        </tr>
+    </table>
+
+    <table>
+        <tr><td colspan="2" class="section-title">3. Verifikasi Tindakan Perbaikan</td></tr>
+        <tr>
+            <td colspan="2">
+                <div class="field-label">Komentar Verifikasi:</div>
+                <div style="min-height: 50px;">{{ $ltk->Komentar_Verifikasi }}</div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div class="field-label">Status Temuan:</div>
+                <span class="checkbox-item">{{ $ltk->Status_Temuan == 'Open' ? '☑' : '☐' }} Open</span>
+                <span class="checkbox-item">{{ $ltk->Status_Temuan == 'Closed' ? '☑' : '☐' }} Closed</span>
+            </td>
+            <td>
+                <div class="field-label">Kategori Temuan:</div>
+                <span class="checkbox-item">{{ $ltk->Kategori_Temuan == 'Major' ? '☑' : '☐' }} Major</span>
+                <span class="checkbox-item">{{ $ltk->Kategori_Temuan == 'Minor' ? '☑' : '☐' }} Minor</span>
+                <span class="checkbox-item">{{ $ltk->Kategori_Temuan == 'Observasi' ? '☑' : '☐' }} Observasi</span>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <table class="no-border" style="margin:0;">
+                    <tr>
+                        <td class="no-border" width="33%">
+                            <div class="field-label">Tanggal Verifikasi:</div>
+                            {{ $ltk->Tgl_Verifikasi }}
+                        </td>
+                        <td class="no-border text-center" width="33%">
+                            <div class="signature-box">
+                                ( {{ $ltk->Penutup_Penerbit_Paraf }} )<br>
+                                <strong>Paraf Auditor</strong>
+                            </div>
+                        </td>
+                        <td class="no-border text-center" width="33%">
+                             <div class="signature-box">
+                                ( {{ $ltk->Penutup_Penerbit_Inisial }} )<br>
+                                <strong>Inisial</strong>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    @if($ltk->Lanjut_Ke_LTK_No)
+    <div style="text-align: right; font-style: italic;">
+        Dilanjutkan ke LTK No: {{ $ltk->Lanjut_Ke_LTK_No }}
+    </div>
+    @endif
 
 </body>
 </html>
