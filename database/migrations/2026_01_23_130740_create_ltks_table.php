@@ -9,72 +9,122 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('ltks', function (Blueprint $table) {
-            $table->id('ID_LTK'); // Primary Key
-            
-            // Header Dokumen
-            $table->string('Kode_Form')->nullable()->default('FRM-IA-01');
-            $table->string('Judul_Dokumen')->nullable()->default('LAPORAN TEMUAN KETIDAKSESUAIAN (LTK)');
+            $table->id('ID_LTK');
+
+            /* =====================================================
+             * A. IDENTITAS DOKUMEN
+             * ===================================================== */
+            $table->string('Kode_Form')->default('FP/ST/SYM/001');
+            $table->string('Judul_Dokumen')->default('LAPORAN TEMUAN KETIDAKSESUAIAN (LTK)');
             $table->string('LTK_No')->nullable();
-            
-            // Informasi Audit
-            $table->string('Tipe_Audit_INT_OT')->nullable(); // Internal / Other
+            $table->string('Status_Dokumen')->nullable(); // Baru / Revisi
+
+            /* =====================================================
+             * B. INFORMASI AUDIT
+             * ===================================================== */
+            $table->string('Tipe_Audit_INT_OT')->nullable(); // Internal / External / Other
             $table->string('Nomor_Prosedur')->nullable();
             $table->date('Tanggal_Audit')->nullable();
             $table->string('Tahun')->nullable();
-            
-            // Penerbit (Checklist/Nama)
+
+            /* =====================================================
+             * C. PENERBIT
+             * ===================================================== */
             $table->string('Penerbit_1')->nullable();
             $table->string('Penerbit_2')->nullable();
             $table->string('Penerbit_3')->nullable();
-            
-            // Tujuan
-            $table->string('Kepada')->nullable(); // Unit Kerja/Auditee
+
+            /* =====================================================
+             * D. TUJUAN & UNIT TERKAIT
+             * ===================================================== */
+            $table->string('Kepada')->nullable();
             $table->string('Dept_Proses')->nullable();
             $table->date('Tanggal_Laporan')->nullable();
-            
-            // Sumber Temuan
-            $table->string('Sumber_Temuan')->nullable();
+
+            /* =====================================================
+             * E. SUMBER TEMUAN (CHECKLIST)
+             * ===================================================== */
+            $table->boolean('Sumber_Audit_Internal')->default(false);
+            $table->boolean('Sumber_SMST')->default(false);
+            $table->boolean('Sumber_Komplain_Pelanggan')->default(false);
+            $table->boolean('Sumber_Proses_Perbaikan')->default(false);
+            $table->boolean('Sumber_Tinjauan_Manajemen')->default(false);
+            $table->boolean('Sumber_Lainnya')->default(false);
             $table->string('Sumber_Lainnya_Text')->nullable();
-            
-            // Uraian Temuan
+
+            /* =====================================================
+             * F. URAIAN TEMUAN
+             * ===================================================== */
             $table->text('Gambaran_Ketidaksesuaian')->nullable();
             $table->string('Lokasi')->nullable();
             $table->text('Bukti_Objektif')->nullable();
-            
-            // Referensi Standar (Checkbox)
-            $table->boolean('Ref_ISO_9001')->default(0);
-            $table->boolean('Ref_ISO_14001')->default(0);
-            $table->boolean('Ref_SMK3')->default(0);
-            $table->boolean('Ref_ISO_45001')->default(0);
-            $table->boolean('Ref_LAB_17025')->default(0);
-            $table->boolean('Ref_ISO_50001')->default(0);
-            $table->boolean('Ref_SMKP_Minerba')->default(0);
-            $table->boolean('Ref_ISO_37001')->default(0);
-            
-            // Auditor Info
-            $table->string('Paraf_Auditor')->nullable(); // Simpan Nama/Inisial
+
+            /* =====================================================
+             * G. REFERENSI STANDAR (CHECKLIST + KLAUSUL)
+             * ===================================================== */
+            $table->boolean('Ref_ISO_9001')->default(false);
+            $table->string('ISO_9001_Klausul')->nullable();
+
+            $table->boolean('Ref_ISO_14001')->default(false);
+            $table->string('ISO_14001_Klausul')->nullable();
+
+            $table->boolean('Ref_SMK3')->default(false);
+            $table->string('SMK3_Elemen')->nullable();
+
+            $table->boolean('Ref_ISO_45001')->default(false);
+            $table->string('ISO_45001_Klausul')->nullable();
+
+            $table->boolean('Ref_LAB_17025')->default(false);
+            $table->string('LAB_17025_Klausul')->nullable();
+
+            $table->boolean('Ref_ISO_50001')->default(false);
+            $table->string('ISO_50001_Klausul')->nullable();
+
+            $table->boolean('Ref_SMKP_Minerba')->default(false);
+            $table->string('SMKP_Minerba_Elemen')->nullable();
+
+            $table->boolean('Ref_ISO_37001')->default(false);
+            $table->string('ISO_37001_Elemen')->nullable();
+
+            /* =====================================================
+             * H. AUDITOR
+             * ===================================================== */
+            $table->string('Paraf_Auditor')->nullable();
             $table->string('Inisial_Auditor')->nullable();
-            
-            // Analisa & Tindakan
+
+            /* =====================================================
+             * I. ANALISIS & TINDAKAN PERBAIKAN
+             * ===================================================== */
             $table->text('Akar_Masalah')->nullable();
-            $table->text('Rencana_Tindakan')->nullable();
-            $table->date('Tgl_Selesai_Tindakan')->nullable();
-            
-            // Auditee Info
+            $table->text('Rencana_Tindakan_Perbaikan')->nullable();
+            $table->date('Tanggal_Selesai_Tindakan')->nullable();
+
+            /* =====================================================
+             * J. AUDITEE
+             * ===================================================== */
             $table->string('Auditee_Nama')->nullable();
             $table->string('Paraf_Auditee')->nullable();
             $table->string('Inisial_Auditee')->nullable();
-            
-            // Verifikasi
-            $table->date('Tgl_Verifikasi')->nullable();
+
+            /* =====================================================
+             * K. VERIFIKASI
+             * ===================================================== */
+            $table->date('Tanggal_Verifikasi')->nullable();
             $table->text('Komentar_Verifikasi')->nullable();
-            $table->string('Status_Temuan')->nullable(); // Open/Closed
-            $table->string('Kategori_Temuan')->nullable(); // Major/Minor/Obs
-            
-            // Penutup
-            $table->string('Penutup_Penerbit_Paraf')->nullable();
-            $table->string('Penutup_Penerbit_Inisial')->nullable();
-            $table->string('Lanjut_Ke_LTK_No')->nullable();
+            $table->string('Hasil_Verifikasi')->nullable(); // contoh: Sudah Close
+
+            /* =====================================================
+             * L. STATUS TEMUAN
+             * ===================================================== */
+            $table->string('Status_Temuan')->nullable(); // Selesai / Lanjut
+            $table->string('Kategori_Temuan')->nullable(); // Fatality / Major / Minor / Observasi
+
+            /* =====================================================
+             * M. PENUTUP
+             * ===================================================== */
+            $table->string('Penerbit_Penutup_Paraf')->nullable();
+            $table->string('Penerbit_Penutup_Inisial')->nullable();
+            $table->string('Dilanjutkan_Ke_LTK_No')->nullable();
 
             $table->timestamps();
         });
