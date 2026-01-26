@@ -4,161 +4,101 @@ namespace App\Http\Controllers;
 
 use App\Models\Ltk;
 use Illuminate\Http\Request;
-use Barryvdh\DomPDF\Facade\Pdf;
+use Barryvdh\DomPDF\Facade\Pdf; // Pastikan import ini ada
 
 class LtkController extends Controller
 {
-    /* =====================================================
-     * LIST DATA
-     * ===================================================== */
+    /**
+     * Menampilkan daftar LKT
+     */
     public function index()
     {
-        $ltks = Ltk::orderBy('created_at', 'desc')->get();
+        // Mengambil data terbaru
+        $ltks = Ltk::latest()->get(); 
         return view('ltk.index', compact('ltks'));
     }
 
-    /* =====================================================
-     * FORM CREATE
-     * ===================================================== */
+    /**
+     * Menampilkan Form Pembuatan LKT
+     */
     public function create()
     {
         return view('ltk.create');
     }
 
-    /* =====================================================
-     * SIMPAN DATA
-     * ===================================================== */
+    /**
+     * Menyimpan Data LKT ke Database
+     */
     public function store(Request $request)
     {
-        $request->validate([
-            'LTK_No' => 'required',
-            'Kepada' => 'required',
+        // 1. Validasi Input
+        // Field 'required' wajib diisi user, 'nullable' boleh dikosongkan.
+        $validatedData = $request->validate([
+            // Header Wajib
+            'nomor_lkt' => 'required|unique:ltks,nomor_lkt',
+            'tanggal' => 'required|date',
+            'kepada' => 'required|string',
+            'unit_kerja' => 'required|string',
+            
+            // Konten Utama Wajib
+            'ketidaksesuaian' => 'required|string',
+            'akar_penyebab' => 'required|string',
+            'tindakan_perbaikan' => 'required|string',
+            'target_penyelesaian' => 'required|date',
+
+            // Field Tambahan (Boleh Kosong / Nullable)
+            'penerbit_1' => 'nullable|string',
+            'penerbit_2' => 'nullable|string',
+            'penerbit_3' => 'nullable|string',
+            
+            'sumber' => 'nullable|string',
+            'sumber_lainnya_text' => 'nullable|string',
+            
+            'lokasi' => 'nullable|string',
+            'bukti_objektif' => 'nullable|string',
+            'inisial_auditor' => 'nullable|string',
+
+            // Referensi Standar (ISO dll)
+            'iso_9001_klausul' => 'nullable|string',
+            'iso_14001_klausul' => 'nullable|string',
+            'smk3_elemen' => 'nullable|string',
+            'iso_45001_klausul' => 'nullable|string',
+            'lab_17025_klausul' => 'nullable|string',
+            'iso_50001_klausul' => 'nullable|string',
+            'smkp_minerba_elemen' => 'nullable|string',
+            'iso_37001_elemen' => 'nullable|string',
+
+            // Footer / Verifikasi
+            'auditee_nama' => 'nullable|string',
+            'verifikasi_tindakan' => 'nullable|string',
+            'status' => 'nullable|string',
+            'kategori_temuan' => 'nullable|string',
+            'tanggal_verifikasi' => 'nullable|date',
+            'dilanjutkan_ke_ltk_no' => 'nullable|string',
         ]);
 
-        $data = $request->all();
+        // 2. Simpan ke Database
+        Ltk::create($validatedData);
 
-        /* ============================
-         * CHECKBOX SUMBER TEMUAN
-         * ============================ */
-        $sumberCheckboxes = [
-            'Sumber_Audit_Internal',
-            'Sumber_SMST',
-            'Sumber_Komplain_Pelanggan',
-            'Sumber_Proses_Perbaikan',
-            'Sumber_Tinjauan_Manajemen',
-            'Sumber_Lainnya',
-        ];
-
-        foreach ($sumberCheckboxes as $item) {
-            $data[$item] = $request->has($item) ? 1 : 0;
-        }
-
-        /* ============================
-         * CHECKBOX REFERENSI STANDAR
-         * ============================ */
-        $referensiCheckboxes = [
-            'Ref_ISO_9001',
-            'Ref_ISO_14001',
-            'Ref_SMK3',
-            'Ref_ISO_45001',
-            'Ref_LAB_17025',
-            'Ref_ISO_50001',
-            'Ref_SMKP_Minerba',
-            'Ref_ISO_37001',
-        ];
-
-        foreach ($referensiCheckboxes as $item) {
-            $data[$item] = $request->has($item) ? 1 : 0;
-        }
-
-        Ltk::create($data);
-
-        return redirect()
-            ->route('ltk.index')
-            ->with('success', 'Laporan Temuan Ketidaksesuaian berhasil disimpan');
+        // 3. Redirect kembali ke halaman index dengan pesan sukses
+        return redirect()->route('ltk.index')->with('success', 'LKT Berhasil dibuat dan disimpan.');
     }
 
-    /* =====================================================
-     * DETAIL DATA
-     * ===================================================== */
-    public function show($id)
+    /**
+     * Download PDF LKT
+     */
+    public function downloadPDF($id)
     {
-        $ltk = Ltk::findOrFail($id);
-        return view('ltk.show', compact('ltk'));
-    }
-
-    /* =====================================================
-     * FORM EDIT
-     * ===================================================== */
-    public function edit($id)
-    {
-        $ltk = Ltk::findOrFail($id);
-        return view('ltk.edit', compact('ltk'));
-    }
-
-    /* =====================================================
-     * UPDATE DATA
-     * ===================================================== */
-    public function update(Request $request, $id)
-    {
+        // Cari data berdasarkan ID, jika tidak ketemu akan error 404
         $ltk = Ltk::findOrFail($id);
 
-        $data = $request->all();
+        // Load View PDF (sesuai nama file di resources/views/ltk/pdf.blade.php)
+        $pdf = Pdf::loadView('ltk.pdf', compact('ltk'));
 
-        $checkboxes = [
-            // Sumber
-            'Sumber_Audit_Internal',
-            'Sumber_SMST',
-            'Sumber_Komplain_Pelanggan',
-            'Sumber_Proses_Perbaikan',
-            'Sumber_Tinjauan_Manajemen',
-            'Sumber_Lainnya',
+        // Set ukuran kertas A4 Portrait
+        $pdf->setPaper('a4', 'portrait');
 
-            // Referensi
-            'Ref_ISO_9001',
-            'Ref_ISO_14001',
-            'Ref_SMK3',
-            'Ref_ISO_45001',
-            'Ref_LAB_17025',
-            'Ref_ISO_50001',
-            'Ref_SMKP_Minerba',
-            'Ref_ISO_37001',
-        ];
-
-        foreach ($checkboxes as $item) {
-            $data[$item] = $request->has($item) ? 1 : 0;
-        }
-
-        $ltk->update($data);
-
-        return redirect()
-            ->route('ltk.index')
-            ->with('success', 'Data LTK berhasil diperbarui');
-    }
-
-    /* =====================================================
-     * HAPUS DATA
-     * ===================================================== */
-    public function destroy($id)
-    {
-        $ltk = Ltk::findOrFail($id);
-        $ltk->delete();
-
-        return redirect()
-            ->route('ltk.index')
-            ->with('success', 'Data LTK berhasil dihapus');
-    }
-
-    /* =====================================================
-     * DOWNLOAD PDF
-     * ===================================================== */
-    public function downloadPdf($id)
-    {
-        $ltk = Ltk::findOrFail($id);
-
-        $pdf = Pdf::loadView('ltk.pdf', compact('ltk'))
-            ->setPaper('A4', 'portrait');
-
-        return $pdf->download('LTK-' . $ltk->LTK_No . '.pdf');
+        // Download file dengan nama dinamis (contoh: LKT-2026-001.pdf)
+        return $pdf->download('LKT-' . $ltk->nomor_lkt . '.pdf');
     }
 }
