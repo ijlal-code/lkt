@@ -42,7 +42,7 @@
         {{ $sp2a->dasar_surat }}</p>
 
         <p><strong>Isi Peringatan:</strong><br>
-        {{ $sp2a->isi_surat }}</p>
+        {!! $sp2a->isi_surat !!}</p>
 
         <p>Mohon agar surat ini dapat ditindaklanjuti sebagaimana mestinya.</p>
 

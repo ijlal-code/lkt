@@ -27,15 +27,15 @@ class Sp2aController extends Controller
 
     public function store(Request $request)
     {
-        // Validasi
         $request->validate([
             'tanggal_surat' => 'required|date',
-            'kepada_id' => 'required', // ID dari dropdown kontak
-            'dasar_surat' => 'required',
+            'kepada_id' => 'required',
+            'dari_nama' => 'required|string', // Validasi baru
+            'perihal' => 'required|string',
             'isi_surat' => 'required',
+            'penanda_tangan_nama' => 'required|string', // Validasi baru
         ]);
 
-        // Ambil detail kontak berdasarkan ID yang dipilih
         $auditee = Contact::findOrFail($request->kepada_id);
         $auditor = $request->cc_id ? Contact::find($request->cc_id) : null;
 
@@ -43,11 +43,13 @@ class Sp2aController extends Controller
             'tanggal_surat' => $request->tanggal_surat,
             'kepada_nama' => $auditee->nama,
             'kepada_email' => $auditee->email,
+            'dari_nama' => $request->dari_nama, // Simpan Dari
             'cc_nama' => $auditor ? $auditor->nama : null,
             'cc_email' => $auditor ? $auditor->email : null,
+            'perihal' => $request->perihal,
             'dasar_surat' => $request->dasar_surat,
-            'isi_surat' => $request->isi_surat,
-            'perihal' => $request->perihal ?? 'Surat Peringatan 2A',
+            'isi_surat' => $request->isi_surat, // Ini nanti berisi HTML dari editor
+            'penanda_tangan_nama' => $request->penanda_tangan_nama, // Simpan Penanda Tangan
         ]);
 
         return redirect()->route('sp2a.index')->with('success', 'Draft SP2A berhasil dibuat.');
