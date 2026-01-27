@@ -2,93 +2,107 @@
 
 namespace App\Http\Controllers;
 
+    
+use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Sp2a;
-use App\Models\Ltk;
+use App\Models\Contact;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\Sp2aNotification; 
+use App\Mail\Sp2aNotification; // Pastikan Mailable ini sudah ada (seperti contoh sebelumnya)
 
 class Sp2aController extends Controller
 {
-    /**
-     * Menampilkan Daftar SP2A
-     */
     public function index()
     {
-        // Ambil data SP2A terbaru beserta data LKT relasinya
-        $sp2as = Sp2a::with('ltk')->latest()->get();
+        $sp2as = Sp2a::latest()->get();
         return view('sp2a.index', compact('sp2as'));
     }
 
-    /**
-     * Form Buat SP2A (Berdasarkan ID LKT)
-     */
-    public function create($ltk_id)
+    public function create()
     {
-        $ltk = Ltk::findOrFail($ltk_id);
-        
-        // Cek apakah LKT ini sudah punya SP2A
-        if ($ltk->sp2a) {
-            return redirect()->route('sp2a.index')->with('error', 'SP2A untuk LKT nomor ' . $ltk->nomor_lkt . ' sudah ada.');
-        }
-
-        return view('sp2a.create', compact('ltk'));
+        // Kirim data kontak untuk dropdown
+        $contacts = Contact::all();
+        return view('sp2a.create', compact('contacts'));
     }
 
-    /**
-     * Simpan SP2A ke Database
-     */
     public function store(Request $request)
     {
+        // Validasi
         $request->validate([
-            'ltk_id' => 'required|exists:ltks,id',
-            'tanggal_sp2a' => 'required|date',
-            'kepada' => 'required|string',
-            'dasar_peringatan' => 'required|string',
-            'email_auditee' => 'required|email',
+            'tanggal_surat' => 'required|date',
+            'kepada_id' => 'required', // ID dari dropdown kontak
+            'dasar_surat' => 'required',
+            'isi_surat' => 'required',
         ]);
 
-        Sp2a::create($request->all());
+        // Ambil detail kontak berdasarkan ID yang dipilih
+        $auditee = Contact::findOrFail($request->kepada_id);
+        $auditor = $request->cc_id ? Contact::find($request->cc_id) : null;
 
-        return redirect()->route('sp2a.index')->with('success', 'Draft SP2A berhasil dibuat. Silakan Approve untuk menerbitkan nomor.');
+        Sp2a::create([
+            'tanggal_surat' => $request->tanggal_surat,
+            'kepada_nama' => $auditee->nama,
+            'kepada_email' => $auditee->email,
+            'cc_nama' => $auditor ? $auditor->nama : null,
+            'cc_email' => $auditor ? $auditor->email : null,
+            'dasar_surat' => $request->dasar_surat,
+            'isi_surat' => $request->isi_surat,
+            'perihal' => $request->perihal ?? 'Surat Peringatan 2A',
+        ]);
+
+        return redirect()->route('sp2a.index')->with('success', 'Draft SP2A berhasil dibuat.');
     }
 
-    /**
-     * Approval SP2A
-     */
+
+
     public function approve($id)
     {
-        $sp2a = Sp2a::with('ltk')->findOrFail($id);
+        $sp2a = Sp2a::findOrFail($id);
 
         if ($sp2a->status === 'Approved') {
-            return back()->with('error', 'SP2A sudah disetujui sebelumnya.');
+            return back()->with('error', 'Sudah diapprove sebelumnya.');
         }
 
-        // Generate Nomor
+        // 1. Generate Nomor Surat
         $bulanRomawi = $this->getRomawi(date('n'));
         $tahun = date('Y');
-        $noUrut = str_pad($sp2a->id, 3, '0', STR_PAD_LEFT); 
+        $noUrut = str_pad($sp2a->id, 3, '0', STR_PAD_LEFT);
         $nomorSurat = "SP2A/{$noUrut}/INTERNAL/{$bulanRomawi}/{$tahun}";
 
-        // Update
+        // 2. Update Database
         $sp2a->update([
             'nomor_sp2a' => $nomorSurat,
             'status' => 'Approved',
-            'tanggal_approved' => now(),
+            'approved_at' => now(),
         ]);
 
-        // Kirim Email (Pastikan mailer sudah dikonfigurasi)
-        if ($sp2a->email_auditee) {
-            // Logika kirim email di sini
-            // Mail::to($sp2a->email_auditee)...
+        // 3. GENERATE PDF (Tanpa disimpan ke file, langsung ke memori)
+        // Pastikan Anda sudah install: composer require barryvdh/laravel-dompdf
+        $pdf = Pdf::loadView('sp2a.pdf', compact('sp2a'));
+        $pdfContent = $pdf->output(); // Ambil data biner PDF
+
+        // 4. KIRIM EMAIL + ATTACHMENT
+        try {
+            $mail = Mail::to($sp2a->kepada_email);
+            
+            // CC jika ada
+            if ($sp2a->cc_email) {
+                $mail->cc($sp2a->cc_email);
+            }
+
+            // Kirim Email dengan membawa data PDF
+            $mail->send(new Sp2aNotification($sp2a, $pdfContent));
+
+        } catch (\Exception $e) {
+            return back()->with('error', 'SP2A Approved, tapi GAGAL kirim email. Cek koneksi internet/SMTP. Error: ' . $e->getMessage());
         }
 
-        return back()->with('success', 'SP2A Disetujui. Nomor: ' . $nomorSurat);
+        return back()->with('success', "Sukses! SP2A diterbitkan ($nomorSurat) dan file PDF telah dikirim ke email.");
     }
 
-    private function getRomawi($bulan) {
+    private function getRomawi($n) {
         $map = [1=>'I', 2=>'II', 3=>'III', 4=>'IV', 5=>'V', 6=>'VI', 
                 7=>'VII', 8=>'VIII', 9=>'IX', 10=>'X', 11=>'XI', 12=>'XII'];
-        return $map[$bulan];
+        return $map[$n];
     }
 }

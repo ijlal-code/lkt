@@ -4,16 +4,14 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\LtkController;
 use App\Http\Controllers\Sp2aController;
+use App\Http\Controllers\ContactController;
 
-// Group Route SP2A
-Route::prefix('sp2a')->name('sp2a.')->group(function () {
-    Route::get('/', [Sp2aController::class, 'index'])->name('index'); // Halaman Index
-    Route::post('/store', [Sp2aController::class, 'store'])->name('store'); // Simpan Data
-    Route::post('/{id}/approve', [Sp2aController::class, 'approve'])->name('approve'); // Approve
-});
+// Manajemen Kontak (Email)
+Route::resource('contacts', ContactController::class)->only(['index', 'store', 'destroy']);
 
-// Route khusus untuk memanggil Form Create dari LKT
-Route::get('/ltk/{ltk_id}/create-sp2a', [Sp2aController::class, 'create'])->name('sp2a.create');
+// Manajemen SP2A (Terpisah dari LKT)
+Route::resource('sp2a', Sp2aController::class)->only(['index', 'create', 'store']);
+Route::post('/sp2a/{id}/approve', [Sp2aController::class, 'approve'])->name('sp2a.approve');
 
 Route::resource('ltk', LtkController::class);
 Route::get('ltk/{id}/pdf', [LtkController::class, 'downloadPdf'])->name('ltk.pdf');

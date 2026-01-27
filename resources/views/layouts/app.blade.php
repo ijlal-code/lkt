@@ -3,75 +3,43 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>{{ config('app.name', 'Laravel') }}</title>
 
     <link rel="dns-prefetch" href="//fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=Nunito" rel="stylesheet">
-
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    
     <style>
-        body {
-            overflow-x: hidden;
-        }
-        #wrapper {
-            display: flex;
-            width: 100%;
-            height: 100vh; /* Full Height */
-        }
+        body { overflow-x: hidden; }
+        #wrapper { display: flex; width: 100%; height: 100vh; }
         #sidebar-wrapper {
-            min-height: 100vh;
-            width: 250px;
-            margin-left: 0;
+            min-height: 100vh; width: 250px; margin-left: 0;
             transition: margin 0.25s ease-out;
-            background-color: #343a40; /* Warna Gelap Sidebar */
-            color: white;
+            background-color: #343a40; color: white;
         }
         #sidebar-wrapper .sidebar-heading {
-            padding: 0.875rem 1.25rem;
-            font-size: 1.2rem;
-            font-weight: bold;
-            background-color: #212529;
-            color: #fff;
+            padding: 0.875rem 1.25rem; font-size: 1.2rem; font-weight: bold;
+            background-color: #212529; color: #fff;
         }
         #sidebar-wrapper .list-group-item {
-            background-color: #343a40;
-            color: #cfd2d6;
-            border: none;
-            padding: 12px 20px;
+            background-color: #343a40; color: #cfd2d6; border: none; padding: 12px 20px;
         }
         #sidebar-wrapper .list-group-item:hover {
-            background-color: #495057;
-            color: #fff;
+            background-color: #495057; color: #fff;
         }
         #sidebar-wrapper .list-group-item.active {
-            background-color: #0d6efd;
-            color: #fff;
+            background-color: #0d6efd; color: #fff;
         }
-        /* Submenu Style */
         .sidebar-submenu .list-group-item {
-            padding-left: 40px; /* Indentasi submenu */
-            background-color: #2c3034 !important;
-            font-size: 0.95rem;
+            padding-left: 40px; background-color: #2c3034 !important; font-size: 0.95rem;
         }
-        
-        #page-content-wrapper {
-            width: 100%;
-            overflow-y: auto; /* Scrollable content */
-        }
-        
-        /* Toggle button for mobile */
+        #page-content-wrapper { width: 100%; overflow-y: auto; }
         @media (max-width: 768px) {
-            #sidebar-wrapper {
-                margin-left: -250px;
-            }
-            #wrapper.toggled #sidebar-wrapper {
-                margin-left: 0;
-            }
+            #sidebar-wrapper { margin-left: -250px; }
+            #wrapper.toggled #sidebar-wrapper { margin-left: 0; }
         }
     </style>
 </head>
@@ -84,11 +52,11 @@
             <div class="list-group list-group-flush">
                 
                 <a href="{{ url('/') }}" class="list-group-item list-group-item-action">
-                    Dashboard
+                    <i class="bi bi-speedometer2 me-2"></i> Dashboard
                 </a>
 
                 <a href="#submenuLKT" class="list-group-item list-group-item-action dropdown-toggle" data-bs-toggle="collapse">
-                    Manajemen LKT
+                    <i class="bi bi-file-earmark-text me-2"></i> Manajemen LKT
                 </a>
                 <div class="collapse sidebar-submenu {{ Request::is('ltk*') ? 'show' : '' }}" id="submenuLKT">
                     <a href="{{ route('ltk.index') }}" class="list-group-item list-group-item-action">Daftar LKT</a>
@@ -96,14 +64,20 @@
                 </div>
 
                 <a href="#submenuSP2A" class="list-group-item list-group-item-action dropdown-toggle" data-bs-toggle="collapse">
-                    Manajemen SP2A
+                    <i class="bi bi-exclamation-triangle me-2"></i> Manajemen SP2A
                 </a>
                 <div class="collapse sidebar-submenu {{ Request::is('sp2a*') ? 'show' : '' }}" id="submenuSP2A">
-                    <a href="{{ route('ltk.index') }}" class="list-group-item list-group-item-action">Buat SP2A (via LKT)</a>
                     <a href="{{ route('sp2a.index') }}" class="list-group-item list-group-item-action">Daftar SP2A</a>
+                    <a href="{{ route('sp2a.create') }}" class="list-group-item list-group-item-action">Buat SP2A Baru</a>
                 </div>
 
-                <a href="#" class="list-group-item list-group-item-action">Laporan & Grafik</a>
+                <a href="{{ route('contacts.index') }}" class="list-group-item list-group-item-action">
+                    <i class="bi bi-people me-2"></i> Database Email
+                </a>
+
+                <a href="#" class="list-group-item list-group-item-action">
+                    <i class="bi bi-graph-up me-2"></i> Laporan & Grafik
+                </a>
 
             </div>
         </div>

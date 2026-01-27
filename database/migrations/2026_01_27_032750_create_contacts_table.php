@@ -10,18 +10,21 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-    {
-        Schema::create('sp2as', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
-        });
-    }
+{
+    Schema::create('contacts', function (Blueprint $table) {
+        $table->id();
+        $table->string('nama'); // Nama Orang / Unit
+        $table->string('email')->unique();
+        $table->string('jabatan')->nullable(); // Misal: Manager Area, Auditor
+        $table->timestamps();
+    });
+}
 
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::dropIfExists('sp2as');
+        Schema::dropIfExists('contacts');
     }
 };
