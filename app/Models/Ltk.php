@@ -72,4 +72,11 @@ class Ltk extends Model
         'target_penyelesaian' => 'date',
         'tanggal_verifikasi' => 'date',
     ];
+
+    // Tambahkan di dalam class Ltk
+public function sp2a()
+{
+    // LKT punya satu SP2A (HasOne)
+    return $this->hasOne(Sp2a::class, 'ltk_id');
+}
 }
