@@ -41,14 +41,9 @@
                             @foreach($pesan as $p)
                             <tr>
                                 <td class="ps-4 py-4">
-                                    <div class="d-flex align-items-center">
-                                        <div class="avatar-placeholder bg-light text-primary fw-bold rounded-circle me-3">
-                                            {{ strtoupper(substr($p->dari_nama, 0, 1)) }}
-                                        </div>
-                                        <div>
-                                            <div class="fw-bold text-dark">{{ $p->dari_nama }}</div>
-                                            <div class="small text-muted text-nowrap">{{ $p->dari_jabatan ?? 'User Internal' }}</div>
-                                        </div>
+                                    <div>
+                                        <div class="fw-bold text-dark">{{ $p->dari_nama }}</div>
+                                        <div class="small text-muted text-nowrap">{{ $p->dari_jabatan ?? 'User Internal' }}</div>
                                     </div>
                                 </td>
                                 <td><span class="font-monospace fw-bold text-primary text-nowrap">{{ $p->nomor_sp2a }}</span></td>
@@ -65,21 +60,21 @@
                                     @endif
                                 </td>
                                 <td class="pe-4">
-    <div class="d-flex flex-column gap-2 align-items-center">
-        <a href="{{ route('pesan.preview', $p->id) }}" class="btn btn-action-view w-100 py-1 shadow-sm">
-            Lihat
-        </a>
+                                    <div class="d-flex flex-column gap-2 align-items-center">
+                                        <a href="{{ route('pesan.preview', $p->id) }}" class="btn btn-action-view w-100 py-1 shadow-sm">
+                                            Lihat
+                                        </a>
 
-        @if(Auth::user()->role == 'k3' && $p->status != 'Approved By System')
-            <form action="{{ route('pesan.approve', $p->id) }}" method="POST" class="w-100">
-                @csrf
-                <button type="submit" class="btn btn-success fw-bold w-100 py-1 shadow-sm btn-sm" onclick="return confirm('Setujui dokumen ini?')">
-                    Approve
-                </button>
-            </form>
-        @endif
-    </div>
-</td>
+                                        @if(Auth::user()->role == 'k3' && $p->status != 'Approved By System')
+                                            <form action="{{ route('pesan.approve', $p->id) }}" method="POST" class="w-100">
+                                                @csrf
+                                                <button type="submit" class="btn btn-success fw-bold w-100 py-1 shadow-sm btn-sm" onclick="return confirm('Setujui dokumen ini?')">
+                                                    Approve
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </div>
+                                </td>
                             </tr>
                             @endforeach
                         </tbody>
@@ -94,11 +89,10 @@
     body { background-color: #f8fafc; }
     .custom-table thead { background-color: #fcfcfd; border-bottom: 1px solid #f1f1f1; }
     .custom-table tbody tr:hover { background-color: #f8faff; }
-    .avatar-placeholder { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: 1px solid #e2e8f0; flex-shrink: 0; }
+    /* Style avatar ditiadakan karena elemen dihapus */
     .badge-status-success { background-color: #ecfdf5; color: #059669; padding: 6px 14px; border-radius: 50px; font-weight: 600; font-size: 0.75rem; }
     .badge-status-warning { background-color: #fffbeb; color: #d97706; padding: 6px 14px; border-radius: 50px; font-weight: 600; font-size: 0.75rem; }
     
-    /* Styling Tombol Lihat */
     .btn-action-view { 
         background-color: #ffffff; 
         color: #2563eb; 
@@ -111,7 +105,6 @@
     }
     .btn-action-view:hover { background-color: #2563eb; color: white; border-color: #2563eb; }
     
-    /* Ukuran Tombol Approve agar seragam */
     .btn-sm { font-size: 0.75rem; border-radius: 6px; }
     .text-xs { font-size: 0.7rem; }
 </style>
