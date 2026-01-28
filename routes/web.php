@@ -1,15 +1,24 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\LtkController;
 use App\Http\Controllers\Sp2aController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\PesanController;
-use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\PesanController; // Controller Baru
+use App\Http\Controllers\AuthController; // <--- Import AuthController
+
+// --- ROUTE AUTENTIKASI MANUAL ---
+Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [AuthController::class, 'login']);
+Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
 
 Route::get('/', function () {
+    // Jika sudah login, cek role untuk redirect
     if (Auth::check()) {
         if (Auth::user()->role == 'admin') {
             return redirect()->route('ltk.index');
@@ -17,34 +26,38 @@ Route::get('/', function () {
             return redirect()->route('pesan.index');
         }
     }
-    return view('auth.login'); // Pastikan Anda punya view login
+    // Jika belum login, ke halaman welcome/login
+    return view('welcome'); 
 });
 
-// Group Admin
+
+
+// --- GROUP ADMIN (Akses Penuh) ---
 Route::middleware(['auth', 'role:admin'])->group(function () {
+    
+    // Dashboard & LKT
+    Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+    Route::resource('ltk', LtkController::class);
+    
+    // Manajemen User & Kontak
+    Route::resource('contacts', ContactController::class);
     Route::resource('users', UserController::class);
-    // ... route admin lainnya ...
+
+    // Manajemen SP2A (Admin hanya Buat & Proses Awal)
+    Route::resource('sp2a', Sp2aController::class);
+    Route::post('/sp2a/{id}/process', [Sp2aController::class, 'process'])->name('sp2a.process');
 });
 
-// Group User (K3, Auditor, dll) - Halaman Pesan
+// --- GROUP USER (K3, Auditor, Staff, dll) ---
 Route::middleware(['auth'])->group(function () {
     Route::get('/pesan', [PesanController::class, 'index'])->name('pesan.index');
-    Route::get('/pesan/{id}', [PesanController::class, 'show'])->name('pesan.show');
+    
+    // Halaman yang ada bingkainya
+    Route::get('/pesan/{id}/preview', [PesanController::class, 'previewPage'])->name('pesan.preview');
+    
+    // Endpoint khusus untuk konten PDF-nya
+    Route::get('/pesan/{id}/show', [PesanController::class, 'show'])->name('pesan.show');
+    
+    // Proses Approve
     Route::post('/pesan/{id}/approve', [PesanController::class, 'approve'])->name('pesan.approve');
 });
-
-// Helper untuk cek role (Tambahkan ini di app/Http/Middleware/CheckRole.php jika belum ada, 
-// atau simpelnya pakai Gate/Logic di Controller)
-
-// Route Manajemen User
-Route::resource('users', UserController::class);
-// Manajemen Kontak (Email)
-Route::resource('contacts', ContactController::class)->only(['index', 'store', 'destroy']);
-
-// Manajemen SP2A (Terpisah dari LKT)
-Route::resource('sp2a', Sp2aController::class)->only(['index', 'create', 'store']);
-Route::post('/sp2a/{id}/process', [Sp2aController::class, 'process'])->name('sp2a.process');
-
-Route::resource('ltk', LtkController::class);
-Route::get('ltk/{id}/pdf', [LtkController::class, 'downloadPdf'])->name('ltk.pdf');
-

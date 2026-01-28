@@ -8,7 +8,7 @@
             font-size: 11pt; 
             line-height: 1.4; 
             color: #000;
-            margin: 0;
+            margin: 0; 
             padding: 0;
         }
         
@@ -30,7 +30,7 @@
             font-size: 11pt;
         }
 
-        /* TABEL INFO (Kepada, Dari, dll) */
+        /* TABEL INFORMASI (Kepada, Dari, Perihal) */
         .info-table { 
             width: 100%; 
             margin-bottom: 25px; 
@@ -42,12 +42,12 @@
         .label-col { width: 100px; }
         .sep-col { width: 15px; text-align: center; }
 
-        /* ISI SURAT (Hasil CKEditor) */
+        /* ISI SURAT (Hasil dari Editor) */
         .content { 
             text-align: justify; 
             margin-bottom: 40px;
         }
-        /* Styling khusus agar list/tabel dari Word rapi di PDF */
+        /* Styling khusus agar list/tabel dari Word/CKEditor rapi di PDF */
         .content ul, .content ol { margin-left: 20px; padding-left: 15px; }
         .content li { margin-bottom: 5px; }
         .content p { margin-top: 0; margin-bottom: 10px; }
@@ -63,7 +63,7 @@
             width: 100%;
             margin-top: 50px;
             position: relative;
-            height: 150px; /* Tinggi area tanda tangan */
+            height: 160px; /* Tinggi area tanda tangan */
         }
         .ttd-box {
             position: absolute;
@@ -83,27 +83,28 @@
             text-transform: uppercase;
             border-radius: 5px;
             margin: 15px 0;
-            /* Efek Miring dikit biar kayak cap */
-            transform: rotate(-5deg); 
+            /* Efek Miring agar terlihat seperti cap basah */
+            transform: rotate(-8deg); 
             opacity: 0.9;
         }
         .timestamp {
             display: block;
-            font-size: 9pt;
+            font-size: 8pt;
             margin-top: 5px;
             border-top: 1px solid #28a745;
             padding-top: 2px;
+            color: #28a745;
         }
 
         /* TEMBUSAN / CC */
         .cc {
             clear: both;
-            margin-top: 50px;
+            margin-top: 40px;
             font-size: 9pt;
             color: #444;
         }
         .cc b { text-decoration: underline; color: #000; }
-        .cc ul { margin-top: 5px; padding-left: 20px; margin-bottom: 0; }
+        .cc ul { margin-top: 5px; padding-left: 20px; list-style-type: circle; }
         .cc li { margin-bottom: 2px; }
     </style>
 </head>
@@ -143,24 +144,26 @@
         {!! $sp2a->isi_surat !!}
     </div>
 
-    <div class="ttd-container">
-        <div class="ttd-box">
-            <p>Hormat Kami,</p>
-            
+    <div class="ttd-container" style="margin-top: 30px; float: right; width: 250px; text-align: center;">
+    <div class="ttd-box">
+        <p style="margin-bottom: 0;">Hormat Kami,</p>
+        
+        <div style="height: 60px;"></div>
+
+        <div style="display: flex; flex-direction: column; align-items: center;">
             @if($sp2a->status == 'Approved By System')
-                <div class="digital-stamp">
+                <div style="font-family: 'Courier', monospace; font-size: 11px; font-weight: bold; color: #000; margin-bottom: -3px;">
                     APPROVED BY SYSTEM
-                    <span class="timestamp">
-                        {{ \Carbon\Carbon::parse($sp2a->approved_at)->format('d M Y H:i') }}
-                    </span>
                 </div>
-            @else
-                <br><br><br><br>
             @endif
 
-            <p><strong><u>{{ $sp2a->penanda_tangan_nama }}</u></strong></p>
+            <p style="margin-top: 0; margin-bottom: 0;">
+                <strong><u>{{ $sp2a->penanda_tangan_nama }}</u></strong>
+            </p>
         </div>
     </div>
+</div>
+<div style="clear: both;"></div>
 
     @if($sp2a->email_auditor || $sp2a->email_k3 || $sp2a->email_staff || $sp2a->email_atasan)
     <div class="cc">

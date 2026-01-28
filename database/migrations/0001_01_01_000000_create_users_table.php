@@ -17,6 +17,15 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            // Menggunakan ENUM untuk role yang spesifik
+        $table->enum('role', [
+            'admin', 
+            'k3', 
+            'auditi', 
+            'auditor', 
+            'staff', 
+            'atasan_staff'
+        ]);
             $table->rememberToken();
             $table->timestamps();
         });

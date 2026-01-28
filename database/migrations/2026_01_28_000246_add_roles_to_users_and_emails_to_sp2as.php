@@ -8,11 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // 1. Tambah Role ke User
-        Schema::table('users', function (Blueprint $table) {
-            // Role: admin, auditi, auditor, k3, staff, atasan_staff
-            $table->string('role')->default('staff')->after('email'); 
-        });
+        
 
         // 2. Tambah Kolom Email Tujuan Spesifik ke SP2A
         Schema::table('sp2as', function (Blueprint $table) {

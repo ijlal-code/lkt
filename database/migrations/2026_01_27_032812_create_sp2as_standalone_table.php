@@ -27,7 +27,7 @@ return new class extends Migration
         
         // --- KONTEN ---
         $table->string('perihal')->default('Surat Peringatan 2A');
-        $table->text('dasar_surat'); // Dasarnya apa (ketik manual)
+        $table->text('dasar_surat')->nullable(); // Dasarnya apa (ketik manual)
         $table->text('isi_surat');   // Isi teguran
         
         // --- STATUS ---
