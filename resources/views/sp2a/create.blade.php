@@ -2,11 +2,11 @@
 
 @section('content')
 <style>
-    /* Styling agar editor terlihat tinggi seperti kertas surat */
+    /* Mengatur tinggi maksimal dan scroll internal CKEditor 5 */
     .ck-editor__editable_inline {
-        min-height: 400px;
-        padding: 2rem !important;
-        border: 1px solid #ccc !important;
+        min-height: 300px;
+        max-height: 500px; /* Batas tinggi sebelum scroll muncul */
+        overflow-y: auto;
     }
 </style>
 

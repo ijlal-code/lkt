@@ -50,7 +50,7 @@
                                 <td><div class="text-dark fw-medium">{{ Str::limit($p->perihal, 35) }}</div></td>
                                 <td>
                                     <div class="text-dark text-nowrap">{{ \Carbon\Carbon::parse($p->tanggal_surat)->format('d/m/Y') }}</div>
-                                    <div class="small text-muted text-xs text-nowrap">{{ \Carbon\Carbon::parse($p->tanggal_surat)->diffForHumans() }}</div>
+                                    
                                 </td>
                                 <td class="text-center">
                                     @if($p->status == 'Approved By System')
@@ -89,7 +89,6 @@
     body { background-color: #f8fafc; }
     .custom-table thead { background-color: #fcfcfd; border-bottom: 1px solid #f1f1f1; }
     .custom-table tbody tr:hover { background-color: #f8faff; }
-    /* Style avatar ditiadakan karena elemen dihapus */
     .badge-status-success { background-color: #ecfdf5; color: #059669; padding: 6px 14px; border-radius: 50px; font-weight: 600; font-size: 0.75rem; }
     .badge-status-warning { background-color: #fffbeb; color: #d97706; padding: 6px 14px; border-radius: 50px; font-weight: 600; font-size: 0.75rem; }
     

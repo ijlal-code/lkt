@@ -27,7 +27,7 @@ Route::get('/', function () {
         }
     }
     // Jika belum login, ke halaman welcome/login
-    return view('welcome'); 
+    return redirect()->route('login');
 });
 
 

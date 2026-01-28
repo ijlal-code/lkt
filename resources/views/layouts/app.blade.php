@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
@@ -13,170 +13,254 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     
     <style>
-        body { overflow-x: hidden; }
-        #wrapper { display: flex; width: 100%; height: 100vh; }
+        :root {
+            --sidebar-width: 260px;
+        }
+
+        body { 
+            overflow-x: hidden; 
+            background-color: #f8fafc; 
+        }
+
+        #wrapper { 
+            display: flex; 
+            width: 100%; 
+            min-height: 100vh; 
+        }
+
+        /* Sidebar Styling */
         #sidebar-wrapper {
-            min-height: 100vh; width: 250px; margin-left: 0;
-            transition: margin 0.25s ease-out;
-            background-color: #343a40; color: white;
+            width: var(--sidebar-width);
+            min-height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 1000;
+            background-color: #212529; 
+            color: white;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.25s ease-out;
         }
+
         #sidebar-wrapper .sidebar-heading {
-            padding: 0.875rem 1.25rem; font-size: 1.2rem; font-weight: bold;
-            background-color: #212529; color: #fff;
+            padding: 1.5rem 1.25rem;
+            font-size: 1.25rem;
+            font-weight: bold;
+            background-color: #1a1d20;
+            color: #fff;
+            text-align: center;
+            letter-spacing: 1px;
         }
+
+        /* List Group Styling */
         #sidebar-wrapper .list-group-item {
-            background-color: #343a40; color: #cfd2d6; border: none; padding: 12px 20px;
+            background-color: transparent;
+            color: #adb5bd;
+            border: none;
+            padding: 12px 20px;
+            font-weight: 500;
+            transition: all 0.2s;
         }
+
         #sidebar-wrapper .list-group-item:hover {
-            background-color: #495057; color: #fff;
+            background-color: #343a40;
+            color: #fff;
+            padding-left: 25px;
         }
+
         #sidebar-wrapper .list-group-item.active {
-            background-color: #0d6efd; color: #fff;
+            background-color: #0d6efd;
+            color: #fff;
         }
+
         .sidebar-submenu .list-group-item {
-            padding-left: 40px; background-color: #2c3034 !important; font-size: 0.95rem;
+            padding-left: 45px !important;
+            background-color: #1a1d20 !important;
+            font-size: 0.9rem;
         }
-        #page-content-wrapper { width: 100%; overflow-y: auto; }
-        @media (max-width: 768px) {
-            #sidebar-wrapper { margin-left: -250px; }
-            #wrapper.toggled #sidebar-wrapper { margin-left: 0; }
+
+        /* User Section & Logout at Bottom */
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 20px;
+            background-color: #1a1d20;
+            border-top: 1px solid #343a40;
+        }
+
+        .user-info {
+            background: #2c3034;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        /* Main Content Styling */
+        #page-content-wrapper { 
+            width: 100%; 
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            transition: all 0.25s ease-out;
+        }
+
+        /* Mobile Adjustments (Hamburger Menu Only on Mobile) */
+        .mobile-header {
+            display: none;
+            background: #fff;
+            padding: 10px 20px;
+            border-bottom: 1px solid #dee2e6;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+
+        @media (max-width: 992px) {
+            #sidebar-wrapper {
+                margin-left: calc(-1 * var(--sidebar-width));
+            }
+            #wrapper.toggled #sidebar-wrapper {
+                margin-left: 0;
+            }
+            #page-content-wrapper {
+                margin-left: 0;
+            }
+            .mobile-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+        }
+
+        #wrapper.toggled .overlay {
+            display: block;
         }
     </style>
 </head>
 <body>
+
     <div id="wrapper">
-        
-        <div class="border-end" id="sidebar-wrapper">
-            <div class="sidebar-heading border-bottom">Sistem Audit</div>
+        <div class="overlay" id="sidebarOverlay"></div>
+
+        <div id="sidebar-wrapper">
+            <div class="sidebar-heading border-bottom">
+                <i class="bi bi-shield-lock me-2"></i>SISTEM AUDIT
+            </div>
             
-            <div class="list-group list-group-flush">
-                
-                <a href="{{ url('/') }}" class="list-group-item list-group-item-action">
+            <div class="list-group list-group-flush flex-grow-1 overflow-auto">
+                <a href="{{ url('/') }}" class="list-group-item list-group-item-action {{ Request::is('/') ? 'active' : '' }}">
                     <i class="bi bi-speedometer2 me-2"></i> Dashboard
                 </a>
 
                 @auth
                     @if(Auth::user()->role == 'admin')
-                        
-                        <div class="sidebar-heading mt-2 border-top pt-2" style="font-size: 0.9rem; color: #adb5bd;">
-                            MENU ADMIN
+                        <div class="sidebar-heading mt-2 border-top pt-3 small text-uppercase text-muted" style="font-size: 0.75rem;">
+                            Manajer Admin
                         </div>
 
-                        <a href="#submenuLKT" class="list-group-item list-group-item-action dropdown-toggle" data-bs-toggle="collapse">
-                            <i class="bi bi-file-earmark-text me-2"></i> Manajemen LKT
+                        <a href="#submenuLKT" class="list-group-item list-group-item-action dropdown-toggle d-flex justify-content-between align-items-center" data-bs-toggle="collapse">
+                            <span><i class="bi bi-file-earmark-text me-2"></i> LKT</span>
                         </a>
                         <div class="collapse sidebar-submenu {{ Request::is('ltk*') ? 'show' : '' }}" id="submenuLKT">
-                            <a href="{{ route('ltk.index') }}" class="list-group-item list-group-item-action">Daftar LKT</a>
-                            <a href="{{ route('ltk.create') }}" class="list-group-item list-group-item-action">Buat LKT Baru</a>
+                            <a href="{{ route('ltk.index') }}" class="list-group-item list-group-item-action {{ Request::is('ltk') ? 'text-white fw-bold' : '' }}">Daftar LKT</a>
+                            <a href="{{ route('ltk.create') }}" class="list-group-item list-group-item-action {{ Request::is('ltk/create') ? 'text-white fw-bold' : '' }}">Buat Baru</a>
                         </div>
 
-                        <a href="#submenuSP2A" class="list-group-item list-group-item-action dropdown-toggle" data-bs-toggle="collapse">
-                            <i class="bi bi-exclamation-triangle me-2"></i> Manajemen SP2A
+                        <a href="#submenuSP2A" class="list-group-item list-group-item-action dropdown-toggle d-flex justify-content-between align-items-center" data-bs-toggle="collapse">
+                            <span><i class="bi bi-exclamation-triangle me-2"></i> SP2A</span>
                         </a>
                         <div class="collapse sidebar-submenu {{ Request::is('sp2a*') ? 'show' : '' }}" id="submenuSP2A">
-                            <a href="{{ route('sp2a.index') }}" class="list-group-item list-group-item-action">Daftar SP2A</a>
-                            <a href="{{ route('sp2a.create') }}" class="list-group-item list-group-item-action">Buat SP2A Baru</a>
+                            <a href="{{ route('sp2a.index') }}" class="list-group-item list-group-item-action {{ Request::is('sp2a') ? 'text-white fw-bold' : '' }}">Daftar SP2A</a>
+                            <a href="{{ route('sp2a.create') }}" class="list-group-item list-group-item-action {{ Request::is('sp2a/create') ? 'text-white fw-bold' : '' }}">Buat Baru</a>
                         </div>
 
                         <a href="{{ route('users.index') }}" class="list-group-item list-group-item-action {{ Request::is('users*') ? 'active' : '' }}">
                             <i class="bi bi-people-fill me-2"></i> Manajemen User
                         </a>
-
-                        <a href="#" class="list-group-item list-group-item-action">
-                            <i class="bi bi-graph-up me-2"></i> Laporan & Grafik
-                        </a>
-
                     @else
-                        
-                        <div class="sidebar-heading mt-2 border-top pt-2" style="font-size: 0.9rem; color: #adb5bd;">
-                            MENU USER
+                        <div class="sidebar-heading mt-2 border-top pt-3 small text-uppercase text-muted" style="font-size: 0.75rem;">
+                            Menu Personil
                         </div>
 
                         <a href="{{ route('pesan.index') }}" class="list-group-item list-group-item-action {{ Request::is('pesan*') ? 'active' : '' }}">
                             <i class="bi bi-inbox-fill me-2"></i> Pesan Masuk 
                         </a>
-
                     @endif
                 @endauth
-
             </div>
+
+            @auth
+            <div class="sidebar-footer">
+                <div class="user-info shadow-sm">
+                    <div class="small text-muted mb-1">Login sebagai:</div>
+                    <div class="fw-bold text-truncate">{{ Auth::user()->name }}</div>
+                    <span class="badge bg-primary text-uppercase mt-1" style="font-size: 0.65rem;">{{ Auth::user()->role }}</span>
+                </div>
+                
+                <form action="{{ route('logout') }}" method="POST">
+                    @csrf
+                    <button type="submit" class="btn btn-danger btn-sm w-100 py-2 fw-bold">
+                        <i class="bi bi-box-arrow-right me-2"></i> LOGOUT
+                    </button>
+                </form>
+            </div>
+            @endauth
         </div>
 
         <div id="page-content-wrapper">
-            
-            <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm">
-                <div class="container-fluid">
-                    <button class="btn btn-outline-secondary btn-sm" id="sidebarToggle">☰ Menu</button>
+            <div class="mobile-header">
+                <button class="btn btn-dark" id="sidebarToggle">
+                    <i class="bi bi-list fs-4"></i>
+                </button>
+                <span class="fw-bold">SP2A APP</span>
+                <div></div> </div>
 
-                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent">
-                        <span class="navbar-toggler-icon"></span>
-                    </button>
-
-                    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                        <ul class="navbar-nav ms-auto mt-2 mt-lg-0">
-                            @guest
-                                @if (Route::has('login'))
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="{{ route('login') }}">{{ __('Login') }}</a>
-                                    </li>
-                                @endif
-                                @if (Route::has('register'))
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="{{ route('register') }}">{{ __('Register') }}</a>
-                                    </li>
-                                @endif
-                            @else
-                                <li class="nav-item dropdown">
-                                    <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
-                                        {{ Auth::user()->name }} 
-                                        <span class="badge bg-secondary ms-1">{{ ucfirst(Auth::user()->role) }}</span>
-                                    </a>
-
-                                    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                                        <a class="dropdown-item" href="{{ route('logout') }}"
-                                           onclick="event.preventDefault();
-                                                         document.getElementById('logout-form').submit();">
-                                            {{ __('Logout') }}
-                                        </a>
-
-                                        <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                                            @csrf
-                                        </form>
-                                    </div>
-                                </li>
-                            @endguest
-                        </ul>
-                    </div>
-                </div>
-            </nav>
-
-            <div class="container-fluid py-4">
+            <div class="container-fluid p-4">
                 @if(session('success'))
-                    <div class="alert alert-success">
-                        {{ session('success') }}
+                    <div class="alert alert-success alert-dismissible fade show shadow-sm">
+                        <i class="bi bi-check-circle me-2"></i> {{ session('success') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 @endif
 
                 @if(session('error'))
-                    <div class="alert alert-danger">
-                        {{ session('error') }}
+                    <div class="alert alert-danger alert-dismissible fade show shadow-sm">
+                        <i class="bi bi-exclamation-triangle me-2"></i> {{ session('error') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 @endif
 
                 @yield('content')
             </div>
-
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        window.addEventListener('DOMContentLoaded', event => {
-            const sidebarToggle = document.body.querySelector('#sidebarToggle');
+        document.addEventListener('DOMContentLoaded', event => {
+            const sidebarToggle = document.querySelector('#sidebarToggle');
+            const overlay = document.querySelector('#sidebarOverlay');
+            const wrapper = document.querySelector('#wrapper');
+
             if (sidebarToggle) {
                 sidebarToggle.addEventListener('click', event => {
                     event.preventDefault();
-                    document.body.querySelector('#wrapper').classList.toggle('toggled');
+                    wrapper.classList.toggle('toggled');
+                });
+            }
+
+            // Close sidebar when clicking overlay on mobile
+            if (overlay) {
+                overlay.addEventListener('click', () => {
+                    wrapper.classList.remove('toggled');
                 });
             }
         });
