@@ -6,8 +6,10 @@
         body { 
             font-family: Arial, sans-serif; 
             font-size: 11pt; 
-            line-height: 1.5; 
+            line-height: 1.4; 
             color: #000;
+            margin: 0;
+            padding: 0;
         }
         
         /* HEADER SURAT */
@@ -35,7 +37,7 @@
         }
         .info-table td { 
             vertical-align: top; 
-            padding: 2px 0; 
+            padding: 3px 0; 
         }
         .label-col { width: 100px; }
         .sep-col { width: 15px; text-align: center; }
@@ -56,32 +58,60 @@
             border: 1px solid black; padding: 5px; 
         }
 
-        /* TANDA TANGAN */
+        /* AREA TANDA TANGAN */
         .ttd-container {
             width: 100%;
             margin-top: 50px;
-            /* Menggunakan tabel layout untuk posisi tanda tangan agar stabil di PDF */
+            position: relative;
+            height: 150px; /* Tinggi area tanda tangan */
         }
         .ttd-box {
-            float: right;
+            position: absolute;
+            right: 0;
             width: 250px;
             text-align: center;
+        }
+
+        /* CAP DIGITAL (STAMP) */
+        .digital-stamp {
+            border: 3px solid #28a745; 
+            color: #28a745; 
+            padding: 10px; 
+            display: inline-block;
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+            text-transform: uppercase;
+            border-radius: 5px;
+            margin: 15px 0;
+            /* Efek Miring dikit biar kayak cap */
+            transform: rotate(-5deg); 
+            opacity: 0.9;
+        }
+        .timestamp {
+            display: block;
+            font-size: 9pt;
+            margin-top: 5px;
+            border-top: 1px solid #28a745;
+            padding-top: 2px;
         }
 
         /* TEMBUSAN / CC */
         .cc {
             clear: both;
-            margin-top: 80px;
-            font-size: 10pt;
+            margin-top: 50px;
+            font-size: 9pt;
+            color: #444;
         }
-        .cc b { text-decoration: underline; }
+        .cc b { text-decoration: underline; color: #000; }
+        .cc ul { margin-top: 5px; padding-left: 20px; margin-bottom: 0; }
+        .cc li { margin-bottom: 2px; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <h3>SURAT PERINGATAN 2A (SP2A)</h3>
-        <p>Nomor: {{ $sp2a->nomor_sp2a }}</p>
+        <p>Nomor: {{ $sp2a->nomor_sp2a ?? 'DRAFT / BELUM DIPROSES' }}</p>
     </div>
 
     <table class="info-table">
@@ -116,15 +146,31 @@
     <div class="ttd-container">
         <div class="ttd-box">
             <p>Hormat Kami,</p>
-            <br><br><br><br>
+            
+            @if($sp2a->status == 'Approved By System')
+                <div class="digital-stamp">
+                    APPROVED BY SYSTEM
+                    <span class="timestamp">
+                        {{ \Carbon\Carbon::parse($sp2a->approved_at)->format('d M Y H:i') }}
+                    </span>
+                </div>
+            @else
+                <br><br><br><br>
+            @endif
+
             <p><strong><u>{{ $sp2a->penanda_tangan_nama }}</u></strong></p>
         </div>
     </div>
 
-    @if($sp2a->cc_nama)
+    @if($sp2a->email_auditor || $sp2a->email_k3 || $sp2a->email_staff || $sp2a->email_atasan)
     <div class="cc">
-        <b>Tembusan:</b><br>
-        - {{ $sp2a->cc_nama }}
+        <b>Tembusan Disampaikan Kepada Yth:</b>
+        <ul>
+            @if($sp2a->email_auditor) <li>Auditor ({{ $sp2a->email_auditor }})</li> @endif
+            @if($sp2a->email_k3)      <li>Staff K3 ({{ $sp2a->email_k3 }})</li> @endif
+            @if($sp2a->email_staff)   <li>Staff Unit ({{ $sp2a->email_staff }})</li> @endif
+            @if($sp2a->email_atasan)  <li>Atasan Staff ({{ $sp2a->email_atasan }})</li> @endif
+        </ul>
     </div>
     @endif
 

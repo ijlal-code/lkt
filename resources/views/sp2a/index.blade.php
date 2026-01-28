@@ -21,37 +21,38 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($sp2as as $s)
+                    @foreach($sp2as as $sp2a)
                     <tr>
                         <td>
-                            @if($s->nomor_sp2a) 
-                                <span class="fw-bold">{{ $s->nomor_sp2a }}</span> 
+                            @if($sp2a->nomor_sp2a) 
+                                <span class="fw-bold">{{ $sp2a->nomor_sp2a }}</span> 
                             @else 
                                 <span class="text-muted">Draft</span> 
                             @endif
                         </td>
-                        <td>{{ $s->tanggal_surat->format('d M Y') }}</td>
-                        <td>{{ $s->kepada_nama }}</td>
-                        <td>{{ $s->kepada_email }}</td>
+                        <td>{{ $sp2a->tanggal_surat->format('d M Y') }}</td>
+                        <td>{{ $sp2a->kepada_nama }}</td>
+                        <td>{{ $sp2a->kepada_email }}</td>
                         <td>
-                            @if($s->status == 'Approved')
+                            @if($sp2a->status == 'Approved')
                                 <span class="badge bg-success">Approved</span>
                             @else
                                 <span class="badge bg-warning text-dark">Draft</span>
                             @endif
                         </td>
-                        <td>
-                            @if($s->status == 'Draft')
-                                <form action="{{ route('sp2a.approve', $s->id) }}" method="POST">
-                                    @csrf
-                                    <button class="btn btn-sm btn-success" onclick="return confirm('Approve dan Kirim Email ke {{ $s->kepada_email }}?')">
-                                        Approve & Kirim
-                                    </button>
-                                </form>
-                            @else
-                                <button class="btn btn-sm btn-secondary" disabled>Terkirim</button>
-                            @endif
-                        </td>
+                        <td class="text-center">
+    @if($sp2a->status == 'Draft')
+        <form action="{{ route('sp2a.process', $sp2a->id) }}" method="POST" class="d-inline">
+            @csrf
+            <button type="submit" class="btn btn-sm btn-primary fw-bold" onclick="return confirm('Proses SP2A ini? Email akan dikirim ke semua pihak terkait.')">
+                <i class="bi bi-send-check"></i> PROSES
+            </button>
+        </form>
+        @else
+        <button class="btn btn-sm btn-secondary" disabled>Selesai</button>
+        <a href="#" class="btn btn-sm btn-info text-white">Unduh PDF</a>
+    @endif
+</td>
                     </tr>
                     @endforeach
                 </tbody>

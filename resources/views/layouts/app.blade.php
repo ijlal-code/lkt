@@ -55,29 +55,49 @@
                     <i class="bi bi-speedometer2 me-2"></i> Dashboard
                 </a>
 
-                <a href="#submenuLKT" class="list-group-item list-group-item-action dropdown-toggle" data-bs-toggle="collapse">
-                    <i class="bi bi-file-earmark-text me-2"></i> Manajemen LKT
-                </a>
-                <div class="collapse sidebar-submenu {{ Request::is('ltk*') ? 'show' : '' }}" id="submenuLKT">
-                    <a href="{{ route('ltk.index') }}" class="list-group-item list-group-item-action">Daftar LKT</a>
-                    <a href="{{ route('ltk.create') }}" class="list-group-item list-group-item-action">Buat LKT Baru</a>
-                </div>
+                @auth
+                    @if(Auth::user()->role == 'admin')
+                        
+                        <div class="sidebar-heading mt-2 border-top pt-2" style="font-size: 0.9rem; color: #adb5bd;">
+                            MENU ADMIN
+                        </div>
 
-                <a href="#submenuSP2A" class="list-group-item list-group-item-action dropdown-toggle" data-bs-toggle="collapse">
-                    <i class="bi bi-exclamation-triangle me-2"></i> Manajemen SP2A
-                </a>
-                <div class="collapse sidebar-submenu {{ Request::is('sp2a*') ? 'show' : '' }}" id="submenuSP2A">
-                    <a href="{{ route('sp2a.index') }}" class="list-group-item list-group-item-action">Daftar SP2A</a>
-                    <a href="{{ route('sp2a.create') }}" class="list-group-item list-group-item-action">Buat SP2A Baru</a>
-                </div>
+                        <a href="#submenuLKT" class="list-group-item list-group-item-action dropdown-toggle" data-bs-toggle="collapse">
+                            <i class="bi bi-file-earmark-text me-2"></i> Manajemen LKT
+                        </a>
+                        <div class="collapse sidebar-submenu {{ Request::is('ltk*') ? 'show' : '' }}" id="submenuLKT">
+                            <a href="{{ route('ltk.index') }}" class="list-group-item list-group-item-action">Daftar LKT</a>
+                            <a href="{{ route('ltk.create') }}" class="list-group-item list-group-item-action">Buat LKT Baru</a>
+                        </div>
 
-                <a href="{{ route('contacts.index') }}" class="list-group-item list-group-item-action">
-                    <i class="bi bi-people me-2"></i> Database Email
-                </a>
+                        <a href="#submenuSP2A" class="list-group-item list-group-item-action dropdown-toggle" data-bs-toggle="collapse">
+                            <i class="bi bi-exclamation-triangle me-2"></i> Manajemen SP2A
+                        </a>
+                        <div class="collapse sidebar-submenu {{ Request::is('sp2a*') ? 'show' : '' }}" id="submenuSP2A">
+                            <a href="{{ route('sp2a.index') }}" class="list-group-item list-group-item-action">Daftar SP2A</a>
+                            <a href="{{ route('sp2a.create') }}" class="list-group-item list-group-item-action">Buat SP2A Baru</a>
+                        </div>
 
-                <a href="#" class="list-group-item list-group-item-action">
-                    <i class="bi bi-graph-up me-2"></i> Laporan & Grafik
-                </a>
+                        <a href="{{ route('users.index') }}" class="list-group-item list-group-item-action {{ Request::is('users*') ? 'active' : '' }}">
+                            <i class="bi bi-people-fill me-2"></i> Manajemen User
+                        </a>
+
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <i class="bi bi-graph-up me-2"></i> Laporan & Grafik
+                        </a>
+
+                    @else
+                        
+                        <div class="sidebar-heading mt-2 border-top pt-2" style="font-size: 0.9rem; color: #adb5bd;">
+                            MENU USER
+                        </div>
+
+                        <a href="{{ route('pesan.index') }}" class="list-group-item list-group-item-action {{ Request::is('pesan*') ? 'active' : '' }}">
+                            <i class="bi bi-inbox-fill me-2"></i> Pesan Masuk 
+                        </a>
+
+                    @endif
+                @endauth
 
             </div>
         </div>
@@ -108,7 +128,8 @@
                             @else
                                 <li class="nav-item dropdown">
                                     <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
-                                        {{ Auth::user()->name }}
+                                        {{ Auth::user()->name }} 
+                                        <span class="badge bg-secondary ms-1">{{ ucfirst(Auth::user()->role) }}</span>
                                     </a>
 
                                     <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
