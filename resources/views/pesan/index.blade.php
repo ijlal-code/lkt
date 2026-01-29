@@ -40,6 +40,26 @@
                         </thead>
                         <tbody>
                             @foreach($pesan as $p)
+                                {{-- 
+                                    LOGIKA FILTER KHUSUS:
+                                    Hanya peran 'auditor', 'k3', dan 'auditi' yang dibatasi.
+                                    Mereka HANYA boleh melihat dokumen yang statusnya 'Approved By System'.
+                                --}}
+                                @php
+                                    $userRole = Auth::user()->role;
+                                    
+                                    // Daftar peran yang hanya boleh melihat hasil akhir
+                                    $restrictedViewers = ['auditor', 'k3', 'auditi'];
+                                    
+                                    $isRestrictedUser = in_array($userRole, $restrictedViewers);
+                                    $isFinalStatus = ($p->status == 'Approved By System');
+
+                                    // Jika user dibatasi DAN status belum final -> SKIP (Jangan tampilkan)
+                                    if ($isRestrictedUser && !$isFinalStatus) {
+                                        continue; 
+                                    }
+                                @endphp
+
                             <tr>
                                 <td class="ps-4 py-4">
                                     <div>
@@ -59,10 +79,10 @@
                                     <div class="text-dark text-nowrap">{{ \Carbon\Carbon::parse($p->tanggal_surat)->format('d/m/Y') }}</div>
                                 </td>
                                 
-                                {{-- KOLOM STATUS REALTIME --}}
+                                {{-- KOLOM STATUS --}}
                                 <td class="text-center">
                                     @php
-                                        $statusColor = 'warning'; // Default kuning (Menunggu)
+                                        $statusColor = 'warning';
                                         $icon = 'bi-hourglass-split';
                                         
                                         if($p->status == 'Approved By System') {
@@ -72,7 +92,7 @@
                                             $statusColor = 'danger';
                                             $icon = 'bi-x-circle-fill';
                                         } elseif(str_contains($p->status, 'Disetujui')) {
-                                            $statusColor = 'info'; // Biru muda untuk progress intermediate
+                                            $statusColor = 'info';
                                             $icon = 'bi-check-circle';
                                         }
                                     @endphp
@@ -82,30 +102,39 @@
                                     </span>
                                 </td>
                                 
+                                {{-- KOLOM AKSI --}}
                                 <td class="pe-4">
                                     <div class="d-flex flex-column gap-2 align-items-center">
+                                        {{-- 1. Tombol LIHAT (Semua User Punya) --}}
                                         <a href="{{ route('pesan.preview', $p->id) }}" class="btn btn-action-view w-100 py-1 shadow-sm">
-                                            Lihat
+                                            <i class="bi bi-eye me-1"></i> Lihat
                                         </a>
 
-                                        {{-- TOMBOL APPROVE (Hanya Muncul Jika Giliran User Ini) --}}
+                                        {{-- 2. Logika Tombol Kedua (Approve vs Download) --}}
                                         @php
-                                            $role = Auth::user()->role;
                                             $canApprove = false;
-                                            if(($role == 'sm' && $p->current_step == 'sm') || 
-                                               ($role == 'smqa' && $p->current_step == 'smqa') || 
-                                               ($role == 'gm' && $p->current_step == 'gm')) {
+                                            // Cek hak approve (Hanya SM, SMQA, GM)
+                                            if(($userRole == 'sm' && $p->current_step == 'sm') || 
+                                               ($userRole == 'smqa' && $p->current_step == 'smqa') || 
+                                               ($userRole == 'gm' && $p->current_step == 'gm')) {
                                                 $canApprove = true;
                                             }
                                         @endphp
 
                                         @if($canApprove)
-                                            <form action="{{ route('pesan.approve', $p->id) }}" method="POST" class="w-100">
+                                            {{-- Jika Approver: Tampilkan Tombol Approve --}}
+                                            <form action="{{ route('pesan.approve', $p->id) }}" method="POST" class="w-100 form-approve-list">
                                                 @csrf
-                                                <button type="submit" class="btn btn-success fw-bold w-100 py-1 shadow-sm btn-sm" onclick="return confirm('Apakah Anda yakin ingin menyetujui dokumen ini?')">
+                                                <button type="button" class="btn btn-success fw-bold w-100 py-1 shadow-sm btn-sm btn-approve-trigger">
                                                     Approve
                                                 </button>
                                             </form>
+
+                                        @elseif($isFinalStatus)
+                                            {{-- Jika Dokumen Final (User siapapun): Tampilkan Download PDF --}}
+                                            <a href="{{ route('pesan.show', $p->id) }}?download=true" class="btn btn-danger fw-bold w-100 py-1 shadow-sm btn-sm">
+                                                <i class="bi bi-download me-1"></i> PDF
+                                            </a>
                                         @endif
                                     </div>
                                 </td>
@@ -124,10 +153,9 @@
     .custom-table thead { background-color: #fcfcfd; border-bottom: 1px solid #f1f1f1; }
     .custom-table tbody tr:hover { background-color: #f8faff; }
     
-    /* Status Badges */
     .badge-status-success { background-color: #ecfdf5; color: #059669; padding: 6px 14px; border-radius: 50px; font-weight: 600; font-size: 0.75rem; }
     .badge-status-warning { background-color: #fffbeb; color: #d97706; padding: 6px 14px; border-radius: 50px; font-weight: 600; font-size: 0.75rem; }
-    .badge-status-info { background-color: #eff6ff; color: #1d4ed8; padding: 6px 14px; border-radius: 50px; font-weight: 600; font-size: 0.75rem; } /* Biru untuk Disetujui SM/SMQA */
+    .badge-status-info { background-color: #eff6ff; color: #1d4ed8; padding: 6px 14px; border-radius: 50px; font-weight: 600; font-size: 0.75rem; } 
     .badge-status-danger { background-color: #fef2f2; color: #dc2626; padding: 6px 14px; border-radius: 50px; font-weight: 600; font-size: 0.75rem; }
 
     .btn-action-view { 
@@ -144,4 +172,37 @@
     
     .btn-sm { font-size: 0.75rem; border-radius: 6px; }
 </style>
+
+{{-- SCRIPT SWEETALERT UNTUK TOMBOL APPROVE --}}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const approveButtons = document.querySelectorAll('.btn-approve-trigger');
+        approveButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const form = this.closest('form');
+                Swal.fire({
+                    title: 'Setujui Dokumen?',
+                    text: "Anda akan menyetujui dokumen ini secara langsung dari daftar.",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#198754',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Ya, Approve!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        Swal.fire({
+                            title: 'Memproses...',
+                            text: 'Mohon tunggu',
+                            allowOutsideClick: false,
+                            didOpen: () => { Swal.showLoading() }
+                        });
+                        form.submit();
+                    }
+                });
+            });
+        });
+    });
+</script>
 @endsection
