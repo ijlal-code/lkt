@@ -55,6 +55,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/pesan/{id}/show', [PesanController::class, 'show'])->name('pesan.show');
     Route::post('/pesan/{id}/approve', [PesanController::class, 'approve'])->name('pesan.approve');
 
+
+    // 1. Route Riwayat Approval (TAMBAHAN BARU) - Taruh SEBELUM Resource
+    Route::get('/sp2a/riwayat', [Sp2aController::class, 'history'])->name('sp2a.history');
     // --- MANAJEMEN SP2A (WORKFLOW BARU) ---
     // 1. Resource standar (index, create, store, edit, update, destroy, show)
     Route::resource('sp2a', Sp2aController::class);

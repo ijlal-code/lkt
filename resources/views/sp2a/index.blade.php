@@ -1,85 +1,129 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
-    <div class="d-flex justify-content-between mb-3">
-        <h3>Daftar SP2A</h3>
-        <a href="{{ route('sp2a.create') }}" class="btn btn-primary">+ Buat SP2A Baru</a>
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold mb-0 text-secondary"><i class="bi bi-folder2-open me-2"></i>Daftar SP2A</h3>
+        {{-- Tombol Buat hanya untuk Staff / Admin --}}
+        @if(in_array(Auth::user()->role, ['admin', 'staff']))
+        <a href="{{ route('sp2a.create') }}" class="btn btn-primary shadow-sm">
+            <i class="bi bi-plus-circle me-2"></i>Buat SP2A Baru
+        </a>
+        @endif
     </div>
 
     @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>{{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
     @endif
 
-    <div class="card shadow-sm border-0">
-        <div class="card-body table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>Nomor SP2A</th>
-                        <th>Tanggal</th>
-                        <th>Kepada</th>
-                        <th>Status Workflow</th>
-                        <th class="text-center">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($sp2as as $sp2a)
-                    <tr>
-                        <td>
-                            @if($sp2a->nomor_sp2a) 
-                                <span class="fw-bold text-primary">{{ $sp2a->nomor_sp2a }}</span> 
-                            @else 
-                                <span class="text-muted fst-italic">- Belum Terbit -</span> 
-                            @endif
-                        </td>
+    <div class="card shadow-sm border-0 rounded-3">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light text-secondary">
+                        <tr>
+                            <th class="px-4 py-3">Nomor / Tanggal</th>
+                            <th class="py-3">Kepada</th>
+                            <th class="py-3">Status Workflow</th>
+                            <th class="py-3 text-center" style="width: 150px;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($sp2as as $sp2a)
+                        <tr>
+                            {{-- KOLOM NOMOR --}}
+                            <td class="px-4">
+                                @if($sp2a->nomor_sp2a) 
+                                    <div class="fw-bold text-primary">{{ $sp2a->nomor_sp2a }}</div>
+                                @else 
+                                    <div class="text-muted small fst-italic bg-light d-inline-block px-2 rounded border">
+                                        Draft / Proses
+                                    </div>
+                                @endif
+                                <div class="text-muted small mt-1">
+                                    <i class="bi bi-calendar-event me-1"></i>{{ $sp2a->tanggal_surat->format('d M Y') }}
+                                </div>
+                            </td>
+                            
+                            {{-- KOLOM KEPADA --}}
+                            <td>
+                                <span class="fw-bold text-dark">{{ $sp2a->kepada_nama }}</span>
+                                @if($sp2a->kepada_email)
+                                    <br><small class="text-muted">{{ $sp2a->kepada_email }}</small>
+                                @endif
+                            </td>
 
-                        <td>{{ $sp2a->tanggal_surat->format('d M Y') }}</td>
-                        
-                        <td>
-                            <div class="fw-bold">{{ $sp2a->kepada_nama }}</div>
-                            <small class="text-muted">{{ $sp2a->kepada_email }}</small>
-                        </td>
-
-                        <td>
-                            @if($sp2a->current_step == 'finished')
-                                <span class="badge bg-success"><i class="bi bi-check-circle"></i> Selesai (Approved)</span>
-                            @elseif($sp2a->current_step == 'staff')
-                                <span class="badge bg-danger"><i class="bi bi-exclamation-circle"></i> Perlu Perbaikan</span>
-                            @else
-                                <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split"></i> {{ $sp2a->status }}</span>
-                            @endif
-                        </td>
-
-                        <td class="text-center">
-                            <div class="btn-group" role="group">
-                                <a href="{{ route('sp2a.show', $sp2a->id) }}" class="btn btn-sm btn-outline-primary" title="Lihat Detail">
-                                    <i class="bi bi-eye"></i> Detail
-                                </a>
-
+                            {{-- KOLOM STATUS --}}
+                            <td>
                                 @if($sp2a->current_step == 'finished')
-                                    <a href="#" class="btn btn-sm btn-outline-success" title="Unduh PDF">
-                                        <i class="bi bi-file-pdf"></i>
-                                    </a>
+                                    <span class="badge bg-success rounded-pill">
+                                        <i class="bi bi-check-all me-1"></i> Approved By System
+                                    </span>
+                                @elseif($sp2a->current_step == 'staff')
+                                    <span class="badge bg-danger rounded-pill">
+                                        <i class="bi bi-exclamation-octagon me-1"></i> Perlu Perbaikan
+                                    </span>
+                                @else
+                                    {{-- Status Dinamis --}}
+                                    <span class="badge bg-warning text-dark border border-warning rounded-pill">
+                                        <i class="bi bi-hourglass-split me-1"></i> {{ $sp2a->status }}
+                                    </span>
                                 @endif
+                            </td>
 
-                                @if($sp2a->current_step == 'staff' && Auth::user()->role == 'staff')
-                                    <a href="{{ route('sp2a.edit', $sp2a->id) }}" class="btn btn-sm btn-warning">
-                                        <i class="bi bi-pencil"></i> Revisi
+                            {{-- KOLOM AKSI (Layout Vertikal: Detail Atas, Approve Bawah) --}}
+                            <td class="text-center py-3">
+                                <div class="d-flex flex-column gap-2 px-2">
+                                    
+                                    {{-- 1. TOMBOL DETAIL (SELALU MUNCUL UTK SEMUA ROLE) --}}
+                                    <a href="{{ route('sp2a.show', $sp2a->id) }}" class="btn btn-sm btn-outline-primary fw-bold w-100">
+                                        <i class="bi bi-eye me-1"></i> Detail
                                     </a>
-                                @endif
-                            </div>
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-            
-            @if($sp2as->isEmpty())
-                <div class="text-center p-4 text-muted">
-                    <p>Belum ada dokumen SP2A.</p>
-                </div>
-            @endif
+
+                                    {{-- 2. TOMBOL APPROVE (LOGIKA KHUSUS) --}}
+                                    @php
+                                        $showApproveBtn = false;
+                                        $role = Auth::user()->role;
+                                        
+                                        // Cek apakah giliran role ini untuk approve
+                                        if($role == 'sm' && $sp2a->current_step == 'sm') $showApproveBtn = true;
+                                        if($role == 'smqa' && $sp2a->current_step == 'smqa') $showApproveBtn = true;
+                                        if($role == 'gm' && $sp2a->current_step == 'gm') $showApproveBtn = true;
+                                    @endphp
+
+                                    @if($showApproveBtn)
+                                        <form action="{{ route('sp2a.approve', $sp2a->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin menyetujui dokumen ini?');">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-success w-100 shadow-sm" title="Klik untuk Approve">
+                                                <i class="bi bi-check-lg me-1"></i> Approve
+                                            </button>
+                                        </form>
+                                    @endif
+
+                                    {{-- 3. TOMBOL REVISI (KHUSUS STAFF) --}}
+                                    @if($sp2a->current_step == 'staff' && Auth::user()->role == 'staff')
+                                        <a href="{{ route('sp2a.edit', $sp2a->id) }}" class="btn btn-sm btn-warning w-100">
+                                            <i class="bi bi-pencil me-1"></i> Revisi
+                                        </a>
+                                    @endif
+
+                                </div>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="4" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
+                                Belum ada dokumen SP2A.
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>

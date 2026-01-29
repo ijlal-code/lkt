@@ -194,6 +194,24 @@
                             <i class="bi bi-inbox-fill me-2"></i> Pesan Masuk 
                         </a>
                     @endif
+
+                    {{-- TOMBOL RIWAYAT PESAN (Hanya untuk SM, SMQA, GM) --}}
+    @if(Auth::check() && in_array(Auth::user()->role, ['sm', 'smqa', 'gm']))
+    <li class="nav-item mt-2">
+        <div class="text-muted small fw-bold text-uppercase px-3 mb-1" style="font-size: 0.7rem;">Monitoring</div>
+        <a class="nav-link {{ request()->routeIs('sp2a.history') ? 'active text-success' : '' }}" href="{{ route('sp2a.history') }}">
+            <i class="bi bi-clock-history me-2"></i> Riwayat Approval
+        </a>
+    </li>
+    @endif
+
+    @if(Auth::check() && Auth::user()->role == 'admin')
+    <li class="nav-item">
+        <a class="nav-link" href="{{ route('users.index') }}">
+            <i class="bi bi-people me-2"></i> Manajemen User
+        </a>
+    </li>
+    @endif
                 @endauth
             </div>
 
