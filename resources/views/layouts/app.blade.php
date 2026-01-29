@@ -161,7 +161,7 @@
                 </a>
 
                 @auth
-                    @if(Auth::user()->role == 'admin')
+                    @if(Auth::user()->role == 'admin' || Auth::user()->role == 'staff')
                         <div class="sidebar-heading mt-2 border-top pt-3 small text-uppercase text-muted" style="font-size: 0.75rem;">
                             Manajer Admin
                         </div>

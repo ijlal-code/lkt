@@ -43,7 +43,10 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::resource('contacts', ContactController::class);
     Route::resource('users', UserController::class);
 
-    // Manajemen SP2A (Admin hanya Buat & Proses Awal)
+    
+});
+
+Route::middleware(['auth', 'role:admin,staff'])->group(function () {
     Route::resource('sp2a', Sp2aController::class);
     Route::post('/sp2a/{id}/process', [Sp2aController::class, 'process'])->name('sp2a.process');
 });

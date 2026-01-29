@@ -53,27 +53,28 @@ class Sp2aController extends Controller
 
     $auditi = User::findOrFail($request->kepada_user_id);
 
-    Sp2a::create([
+    $sp2a = Sp2a::create([
         'tanggal_surat' => $request->tanggal_surat,
-        'kepada_nama'   => $auditi->name,
-        'kepada_email'  => $auditi->email,
-        'dari_nama'     => $request->dari_nama,
-        'perihal'       => $request->perihal,
-        
-        'dasar_surat'   => $request->dasar_surat, // <--- TAMBAHKAN BARIS INI (PENTING)
-        
-        'isi_surat'     => $request->isi_surat,
+        'kepada_user_id' => $request->kepada_user_id,
+        'kepada_email' => $request->kepada_email,
+        'dari_nama' => $request->dari_nama,
+        'perihal' => $request->perihal,
+        'dasar_surat' => $request->dasar_surat,
+        'isi_surat' => $request->isi_surat,
         'penanda_tangan_nama' => $request->penanda_tangan_nama,
-        
         'email_auditor' => $request->email_auditor,
-        'email_k3'      => $request->email_k3,
-        'email_staff'   => $request->email_staff,
-        'email_atasan'  => $request->email_atasan,
-
-        'status' => 'Draft',
+        'email_k3' => $request->email_k3,
+        'email_staff' => $request->email_staff,
+        'email_atasan' => $request->email_atasan,
+        
+        // PENTING: Status awal diset ke 'Waiting Approval' atau sejenisnya
+        // Dan current_step diarahkan ke SM (tahap pertama setelah staff)
+        'status' => 'Pending Approval', 
+        'current_step' => 'sm', 
+        'nomor_sp2a' => null, // Nomor tetap kosong sesuai permintaan
     ]);
 
-    return redirect()->route('sp2a.index')->with('success', 'Draft SP2A berhasil dibuat.');
+    return redirect()->route('sp2a.index')->with('success', 'Dokumen SP2A berhasil dibuat dan dikirim ke SM untuk diperiksa.');
 }
 
     /**

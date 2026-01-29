@@ -15,25 +15,35 @@ class PesanController extends Controller
      * Menampilkan Inbox Pesan
      */
     public function index()
-    {
-        $emailUser = Auth::user()->email;
+{
+    $user = Auth::user();
+    $emailUser = $user->email;
+    $roleUser = $user->role;
 
-        // MODIFIKASI: Jika dokumen sudah 'Approved By System', tampilkan ke SEMUA user.
-        // Jika belum, hanya tampilkan ke orang-orang yang terlibat saja.
-        $pesan = Sp2a::where('status', '!=', 'Draft')
-            ->where(function($q) use ($emailUser) {
-                $q->where('status', 'Approved By System') // Semua user bisa lihat jika sudah disetujui
-                  ->orWhere('kepada_email', $emailUser)
-                  ->orWhere('email_auditor', $emailUser)
-                  ->orWhere('email_k3', $emailUser)
-                  ->orWhere('email_staff', $emailUser)
-                  ->orWhere('email_atasan', $emailUser);
-            })
-            ->latest()
-            ->get();
+    $pesan = Sp2a::where(function($query) use ($emailUser, $roleUser) {
+        // 1. Jika dokumen sudah Selesai (Approved GM), semua role terkait bisa lihat
+        $query->where('status', 'Approved By System')
+              ->where(function($q) use ($emailUser) {
+                  $q->where('kepada_email', $emailUser)
+                    ->orWhere('email_auditor', $emailUser)
+                    ->orWhere('email_k3', $emailUser)
+                    ->orWhere('email_staff', $emailUser)
+                    ->orWhere('email_atasan', $emailUser);
+              });
 
-        return view('pesan.index', compact('pesan'));
-    }
+        // 2. Tampilkan dokumen ke SM/SMQA/GM sesuai tahapannya walaupun belum 'Approved By System'
+        $query->orWhere(function($q) use ($roleUser) {
+            $q->where('current_step', $roleUser);
+        });
+        
+        // 3. Khusus Staff/Admin bisa melihat dokumen yang sedang dalam proses
+        if (in_array($roleUser, ['admin', 'staff'])) {
+            $query->orWhere('status', 'Pending Approval');
+        }
+    })->latest()->get();
+
+    return view('pesan.index', compact('pesan'));
+}
 
     /**
      * Halaman Preview (Menampilkan bingkai/iframe dan tombol Approve)
@@ -96,27 +106,28 @@ class PesanController extends Controller
 
     // 2. Logika Approval Berjenjang
     if ($user->role == 'sm' && $sp2a->current_step == 'sm') {
-        $sp2a->update(['current_step' => 'smqa', 'approved_sm_at' => now()]);
+        $sp2a->update(['current_step' => 'smqa']);
     } 
     elseif ($user->role == 'smqa' && $sp2a->current_step == 'smqa') {
-        $sp2a->update(['current_step' => 'gm', 'approved_smqa_at' => now()]);
+        $sp2a->update(['current_step' => 'gm']);
     } 
     elseif ($user->role == 'gm' && $sp2a->current_step == 'gm') {
-        // TAHAP FINAL: Generate Nomor & Stamp
-        $nomorBaru = "SP2A/" . date('Ymd') . "/" . str_pad($sp2a->id, 4, '0', STR_PAD_LEFT);
-        
+        // TAHAP FINAL: Generate Nomor & Aktifkan akses untuk semua role
+        $tahun = date('Y');
+        $count = Sp2a::whereYear('approved_at', $tahun)->count() + 1;
+        $nomorFinal = "SP2A/" . str_pad($count, 3, '0', STR_PAD_LEFT) . "/IA-ST/" . $tahun;
+
         $sp2a->update([
-            'nomor_sp2a' => $nomorBaru,
+            'nomor_sp2a' => $nomorFinal,
             'status' => 'Approved By System',
             'current_step' => 'finished',
             'approved_at' => now(),
             'approved_gm_at' => now()
         ]);
         
-        // Di sini otomatis terkirim ke role lain karena status sudah 'Approved By System'
-        // (Sesuai logika index() yang kita buat sebelumnya)
+        return redirect()->route('pesan.index')->with('success', 'Dokumen disetujui GM. Nomor telah terbit dan dokumen telah didistribusikan.');
     }
 
-    return redirect()->route('pesan.index')->with('success', 'Dokumen berhasil diproses ke tahap selanjutnya.');
+    return redirect()->route('pesan.index')->with('success', 'Persetujuan berhasil diproses.');
 }
 }
