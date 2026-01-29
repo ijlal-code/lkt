@@ -9,28 +9,37 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class PesanController extends Controller
 {
+    /**
+     * KOTAK PESAN (INBOX)
+     * Logika:
+     * - SM, SMQA, GM: Hanya melihat tugas yang HARUS diapprove sekarang. (Yang selesai masuk History).
+     * - Role Lain: Melihat dokumen yang SUDAH selesai (Approved By System).
+     */
     public function index()
     {
         $user = Auth::user();
+        $role = $user->role;
+        $isApprover = in_array($role, ['sm', 'smqa', 'gm']);
         
-        $pesan = Sp2a::where(function($query) use ($user) {
-            // 1. Dokumen Selesai (Bisa dilihat semua pihak terkait)
-            $query->where('status', 'Approved By System')
-                  ->where(function($q) use ($user) {
-                      $q->where('kepada_email', $user->email)
-                        ->orWhere('email_auditor', $user->email)
-                        ->orWhere('email_k3', $user->email)
-                        ->orWhere('email_staff', $user->email)
-                        ->orWhere('email_atasan', $user->email);
-                  });
-
-            // 2. Dokumen yang sedang menunggu antrian user ini (SM/SMQA/GM)
-            $query->orWhere('current_step', $user->role);
+        $pesan = Sp2a::where(function($query) use ($user, $role, $isApprover) {
             
-            // 3. Admin & Staff bisa memantau dokumen pending/ditolak
-            if (in_array($user->role, ['admin', 'staff'])) {
-                $query->orWhere('status', 'LIKE', '%Menunggu%')
-                      ->orWhere('status', 'LIKE', '%Ditolak%');
+            if ($isApprover) {
+                // --- LOGIKA UNTUK APPROVER (SM, SMQA, GM) ---
+                // Hanya tampilkan yang SEDANG MENUNGGU giliran mereka.
+                // Jika sudah diapprove GM (Final), tidak muncul disini, tapi di 'Riwayat Approval'.
+                $query->where('current_step', $role)
+                      ->where('status', '!=', 'Approved By System');
+            } else {
+                // --- LOGIKA UNTUK ROLE LAIN (Auditor, K3, Auditi, Staff, Admin) ---
+                // 1. Tampilkan Semua Dokumen yang SUDAH FINAL (Broadcast ke semua)
+                $query->where('status', 'Approved By System');
+
+                // 2. Khusus Staff/Admin: Bisa memantau dokumen yang masih proses/ditolak/draft
+                if (in_array($role, ['admin', 'staff'])) {
+                    $query->orWhere('status', 'LIKE', '%Menunggu%')
+                          ->orWhere('status', 'LIKE', '%Ditolak%')
+                          ->orWhere('status', 'LIKE', '%Revisi%');
+                }
             }
         })->latest()->get();
 
@@ -49,13 +58,15 @@ class PesanController extends Controller
         $pdf = Pdf::loadView('sp2a.pdf', compact('sp2a'));
         
         if (request()->has('download')) {
-            return $pdf->download('SP2A-'.$sp2a->id.'.pdf');
+            // Nama file PDF menggunakan Nomor SP2A jika ada
+            $fileName = $sp2a->nomor_sp2a ? str_replace('/', '-', $sp2a->nomor_sp2a) : 'SP2A-'.$sp2a->id;
+            return $pdf->download($fileName . '.pdf');
         }
         return $pdf->stream();
     }
 
     /**
-     * Logic Approval dengan Update Status Realtime
+     * Logic Approval
      */
     public function approve($id, Request $request)
     {
@@ -72,13 +83,13 @@ class PesanController extends Controller
             return redirect()->route('pesan.index')->with('success', 'Dokumen dikembalikan ke Staff untuk perbaikan.');
         }
 
-        // 2. LOGIKA APPROVAL BERJENJANG (Update Status Teks)
+        // 2. LOGIKA APPROVAL BERJENJANG
         
         // SM Approve -> Ke SM QA
         if ($user->role == 'sm' && $sp2a->current_step == 'sm') {
             $sp2a->update([
                 'current_step' => 'smqa', 
-                'status' => 'Disetujui SM (Menunggu SM QA)', // Status Realtime
+                'status' => 'Disetujui SM (Menunggu SM QA)', 
                 'approved_sm_at' => now()
             ]);
         } 
@@ -86,26 +97,36 @@ class PesanController extends Controller
         elseif ($user->role == 'smqa' && $sp2a->current_step == 'smqa') {
             $sp2a->update([
                 'current_step' => 'gm', 
-                'status' => 'Disetujui SM QA (Menunggu GM)', // Status Realtime
+                'status' => 'Disetujui SM QA (Menunggu GM)', 
                 'approved_smqa_at' => now()
             ]);
         } 
-        // GM Approve -> Final
+        // GM Approve -> Final (BROADCAST SYSTEM)
         elseif ($user->role == 'gm' && $sp2a->current_step == 'gm') {
             $tahun = date('Y');
+            // Logika sederhana nomor urut
             $noUrut = Sp2a::whereNotNull('nomor_sp2a')->count() + 1;
-            $nomorBaru = "SP2A/" . str_pad($noUrut, 3, '0', STR_PAD_LEFT) . "/IA/" . $tahun;
+            $romawi = $this->getRomawi(date('n'));
+            $nomorBaru = "SP2A/" . str_pad($noUrut, 3, '0', STR_PAD_LEFT) . "/INTERNAL/" . $romawi . "/" . $tahun;
 
             $sp2a->update([
                 'nomor_sp2a' => $nomorBaru,
-                'status' => 'Approved By System',
+                'status' => 'Approved By System', // Status ini akan memicu muncul di Inbox user lain
                 'current_step' => 'finished',
-                'approved_at' => now(),
+                'approved_at' => now(), // Opsional
                 'approved_gm_at' => now()
             ]);
-            return redirect()->route('pesan.index')->with('success', 'Final! Dokumen disetujui dan nomor diterbitkan.');
+
+            // Redirect GM ke History, karena tugasnya selesai dan inboxnya akan kosong dari item ini
+            return redirect()->route('sp2a.history')->with('success', 'Dokumen Final! Disetujui System & Terkirim ke semua User.');
         }
 
-        return redirect()->route('pesan.index')->with('success', 'Berhasil disetujui. Status dokumen diperbarui.');
+        return redirect()->route('pesan.index')->with('success', 'Berhasil disetujui. Lanjut ke tahap berikutnya.');
+    }
+
+    // Helper Romawi
+    private function getRomawi($n) {
+        $map = [1=>'I', 2=>'II', 3=>'III', 4=>'IV', 5=>'V', 6=>'VI', 7=>'VII', 8=>'VIII', 9=>'IX', 10=>'X', 11=>'XI', 12=>'XII'];
+        return $map[$n] ?? 'I';
     }
 }

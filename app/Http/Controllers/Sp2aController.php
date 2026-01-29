@@ -28,19 +28,25 @@ class Sp2aController extends Controller
         $role = Auth::user()->role;
         $query = Sp2a::query();
 
-        // Filter: Hanya tampilkan yang SUDAH diapprove oleh user tersebut
+        // LOGIKA RIWAYAT:
+        // Tampilkan dokumen jika user tersebut PERNAH memberikan stempel waktu approval.
+        
         if ($role == 'sm') {
+            // SM melihat semua yang pernah dia setujui (termasuk yang sudah final di GM)
             $query->whereNotNull('approved_sm_at');
         } 
         elseif ($role == 'smqa') {
+            // SM QA melihat semua yang pernah dia setujui
             $query->whereNotNull('approved_smqa_at');
         } 
         elseif ($role == 'gm') {
+            // GM melihat semua yang pernah dia setujui
             $query->whereNotNull('approved_gm_at');
         } 
         else {
-            // Jika role lain akses ini, tampilkan kosong
-            $query->where('id', 0);
+            // Role lain (Staff/Auditor/dll) biasanya tidak pakai menu ini (kosongkan)
+            // Atau bisa dialihkan melihat semua yang Approved By System
+            $query->where('status', 'Approved By System');
         }
 
         $riwayat = $query->latest()->get();
