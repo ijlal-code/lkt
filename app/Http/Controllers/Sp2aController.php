@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Sp2a;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -15,72 +14,62 @@ class Sp2aController extends Controller
      */
     public function index()
     {
-        // Mengambil data urut dari yang terbaru
         $sp2as = Sp2a::latest()->get();
         return view('sp2a.index', compact('sp2as'));
     }
 
     /**
-     * Form Buat SP2A (Hanya untuk Staff/Admin)
+     * Form Buat SP2A
+     * Tidak perlu mengambil data user/kontak karena sekarang input manual.
      */
     public function create()
     {
-        // Mengambil data user untuk dropdown tujuan & CC
-        $audities = User::where('role', 'auditi')->get();
-        $auditors = User::where('role', 'auditor')->get();
-        $k3s      = User::where('role', 'k3')->get();
-        $staffs   = User::where('role', 'staff')->get();
-        $atasans  = User::where('role', 'atasan_staff')->get();
-
-        return view('sp2a.create', compact('audities', 'auditors', 'k3s', 'staffs', 'atasans'));
+        return view('sp2a.create');
     }
 
     /**
-     * Simpan SP2A Baru (Staff) -> Masuk ke Tahap SM
+     * Simpan SP2A Baru (Staff) -> Langsung Kirim ke SM
      */
     public function store(Request $request)
     {
         $request->validate([
             'tanggal_surat' => 'required|date',
-            'kepada_user_id' => 'required|exists:users,id',
+            'kepada_nama' => 'required|string',
             'dari_nama' => 'required|string',
             'perihal' => 'required|string',
             'dasar_surat' => 'required|string',
             'isi_surat' => 'required',
             'penanda_tangan_nama' => 'required|string',
+            'tembusan' => 'nullable|array', // Validasi Array
+            'tembusan.*' => 'nullable|string',
         ]);
-
-        $auditi = User::findOrFail($request->kepada_user_id);
 
         Sp2a::create([
             'tanggal_surat' => $request->tanggal_surat,
-            'kepada_nama'   => $auditi->name,
-            'kepada_email'  => $auditi->email,
+            'kepada_nama'   => $request->kepada_nama,
+            'kepada_email'  => $request->kepada_email,
             'dari_nama'     => $request->dari_nama,
             'perihal'       => $request->perihal,
             'dasar_surat'   => $request->dasar_surat,
             'isi_surat'     => $request->isi_surat,
             'penanda_tangan_nama' => $request->penanda_tangan_nama,
             
-            // Email Tembusan (CC)
-            'email_auditor' => $request->email_auditor,
-            'email_k3'      => $request->email_k3,
-            'email_staff'   => $request->email_staff,
-            'email_atasan'  => $request->email_atasan,
+            // Simpan Array Tembusan (Otomatis cast ke JSON oleh Model)
+            // array_filter membersihkan input yang kosong
+            'tembusan' => array_values(array_filter($request->tembusan ?? [])),
 
-            // --- SETTING WORKFLOW AWAL ---
-            'nomor_sp2a' => null, // Belum ada nomor
-            'current_step' => 'sm', // Langsung kirim ke SM
+            // --- WORKFLOW START ---
+            'nomor_sp2a' => null,
+            'current_step' => 'sm', 
             'status' => 'Menunggu Approval SM', 
             'catatan_koreksi' => null,
         ]);
 
-        return redirect()->route('sp2a.index')->with('success', 'Draft SP2A berhasil dibuat dan dikirim ke Senior Manager (SM).');
+        return redirect()->route('sp2a.index')->with('success', 'SP2A berhasil dibuat dan dikirim ke Senior Manager (SM).');
     }
 
     /**
-     * Halaman Detail (Show)
-     * Digunakan untuk Review Dokumen sebelum Approve/Koreksi
+     * Halaman Detail untuk Review & Approval
      */
     public function show($id)
     {
@@ -89,32 +78,21 @@ class Sp2aController extends Controller
     }
 
     /**
-     * Halaman Edit (Hanya bisa diakses jika status dikembalikan/koreksi ke Staff)
+     * Halaman Edit / Revisi (Hanya jika dikembalikan oleh atasan)
      */
     public function edit($id)
     {
         $sp2a = Sp2a::findOrFail($id);
 
-        // Validasi: Hanya bisa edit jika step == 'staff'
         if ($sp2a->current_step != 'staff') {
             return back()->with('error', 'Dokumen sedang dalam proses approval dan tidak dapat diedit.');
         }
 
-        // Data untuk dropdown (sama seperti create)
-        $audities = User::where('role', 'auditi')->get();
-        $auditors = User::where('role', 'auditor')->get();
-        $k3s      = User::where('role', 'k3')->get();
-        $staffs   = User::where('role', 'staff')->get();
-        $atasans  = User::where('role', 'atasan_staff')->get();
-
-        // Kita bisa menggunakan view create dengan mengirimkan data $sp2a
-        // Pastikan di view create.blade.php Anda menangani pengisian value="" dengan old() atau $sp2a->field
-        return view('sp2a.create', compact('sp2a', 'audities', 'auditors', 'k3s', 'staffs', 'atasans'));
+        return view('sp2a.edit', compact('sp2a'));
     }
 
     /**
      * Proses Update Revisi oleh Staff
-     * Mengembalikan status flow ke SM
      */
     public function update(Request $request, $id)
     {
@@ -126,42 +104,33 @@ class Sp2aController extends Controller
 
         $request->validate([
             'tanggal_surat' => 'required|date',
+            'kepada_nama' => 'required|string',
             'isi_surat' => 'required',
-            'perihal' => 'required',
-            // Validasi field lain sesuai kebutuhan
+            'tembusan' => 'nullable|array',
         ]);
 
-        // Persiapan Data Update
-        $auditi = User::find($request->kepada_user_id); // Jika user diganti
-        
-        $data = [
+        // Update Data
+        $sp2a->update([
             'tanggal_surat' => $request->tanggal_surat,
+            'kepada_nama' => $request->kepada_nama,
+            'kepada_email' => $request->kepada_email,
             'dari_nama' => $request->dari_nama,
             'perihal' => $request->perihal,
             'dasar_surat' => $request->dasar_surat,
             'isi_surat' => $request->isi_surat,
             'penanda_tangan_nama' => $request->penanda_tangan_nama,
-            'email_auditor' => $request->email_auditor,
-            'email_k3' => $request->email_k3,
-            'email_staff' => $request->email_staff,
-            'email_atasan' => $request->email_atasan,
-            
-            // Jika penerima diganti
-            'kepada_nama' => $auditi ? $auditi->name : $sp2a->kepada_nama,
-            'kepada_email' => $auditi ? $auditi->email : $sp2a->kepada_email,
+            'tembusan' => array_values(array_filter($request->tembusan ?? [])),
 
-            // RESET WORKFLOW
-            'current_step' => 'sm', // Kembali ke SM
+            // RESET WORKFLOW: Kembalikan ke SM
+            'current_step' => 'sm', 
             'status' => 'Revisi Terkirim (Menunggu Approval SM)',
-            'catatan_koreksi' => null, // Hapus catatan koreksi lama
-
-            // Reset Timestamp Approval sebelumnya (agar approver harus approve ulang)
+            'catatan_koreksi' => null, 
+            
+            // Reset Timestamp Approval sebelumnya
             'approved_sm_at' => null,
             'approved_smqa_at' => null,
             'approved_gm_at' => null,
-        ];
-
-        $sp2a->update($data);
+        ]);
 
         return redirect()->route('sp2a.show', $id)->with('success', 'Revisi berhasil dikirim kembali ke SM.');
     }
@@ -174,7 +143,7 @@ class Sp2aController extends Controller
         $sp2a = Sp2a::findOrFail($id);
         $userRole = Auth::user()->role; 
 
-        // 1. TAHAP SM (Manager) -> Ke SM QA
+        // 1. TAHAP SM -> Ke SM QA
         if ($sp2a->current_step == 'sm' && $userRole == 'sm') {
             $sp2a->update([
                 'current_step' => 'smqa',
@@ -184,7 +153,7 @@ class Sp2aController extends Controller
             return back()->with('success', 'Berhasil disetujui. Dokumen diteruskan ke SM QA.');
         }
 
-        // 2. TAHAP SM QA (Pak Chandra) -> Ke GM
+        // 2. TAHAP SM QA -> Ke GM
         if ($sp2a->current_step == 'smqa' && $userRole == 'smqa') {
             $sp2a->update([
                 'current_step' => 'gm',
@@ -198,7 +167,6 @@ class Sp2aController extends Controller
         if ($sp2a->current_step == 'gm' && $userRole == 'gm') {
             
             // Generate Nomor Surat Otomatis
-            // Format: SP2A/001/INTERNAL/I/2026
             $bulanRomawi = $this->getRomawi($sp2a->tanggal_surat->format('n'));
             $tahun = $sp2a->tanggal_surat->format('Y');
             $noUrut = str_pad($sp2a->id, 3, '0', STR_PAD_LEFT);
@@ -209,28 +177,25 @@ class Sp2aController extends Controller
                 'current_step' => 'finished',
                 'status' => 'Approved By System',
                 'approved_gm_at' => now(),
-                'nomor_sp2a' => $nomorSurat, // Nomor disematkan di sini
+                'nomor_sp2a' => $nomorSurat,
             ]);
 
             return back()->with('success', "Dokumen Final! Nomor $nomorSurat telah diterbitkan.");
         }
 
-        return back()->with('error', 'Anda tidak memiliki akses untuk menyetujui tahap ini atau dokumen sudah diproses.');
+        return back()->with('error', 'Anda tidak memiliki akses untuk menyetujui tahap ini.');
     }
 
     /**
      * Logic Koreksi (Kembalikan ke Staff)
-     * Bisa dilakukan oleh SM, SMQA, atau GM
      */
     public function koreksi(Request $request, $id)
     {
-        $request->validate([
-            'catatan' => 'required|string'
-        ]);
+        $request->validate(['catatan' => 'required|string']);
         
         $sp2a = Sp2a::findOrFail($id);
         
-        // Siapapun yang melakukan koreksi (SM, SMQA, GM), kembalikan ke STAFF
+        // Kembalikan ke STAFF
         $sp2a->update([
             'current_step' => 'staff',
             'status' => 'Perlu Perbaikan (Dikembalikan oleh ' . Auth::user()->name . ')',
@@ -256,13 +221,10 @@ class Sp2aController extends Controller
     }
 
     /**
-     * Helper: Konversi Angka Bulan ke Romawi
+     * Helper Romawi
      */
     private function getRomawi($n) {
-        $map = [
-            1=>'I', 2=>'II', 3=>'III', 4=>'IV', 5=>'V', 6=>'VI', 
-            7=>'VII', 8=>'VIII', 9=>'IX', 10=>'X', 11=>'XI', 12=>'XII'
-        ];
+        $map = [1=>'I', 2=>'II', 3=>'III', 4=>'IV', 5=>'V', 6=>'VI', 7=>'VII', 8=>'VIII', 9=>'IX', 10=>'X', 11=>'XI', 12=>'XII'];
         return $map[$n] ?? 'I';
     }
 }
