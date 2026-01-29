@@ -24,11 +24,20 @@ class Sp2a extends Model
         'email_staff',
         'email_atasan',
         'status',
-        'current_step', // Tahapan workflow
-        'catatan_koreksi', // Komentar revisi
+        'current_step',
+        'catatan_koreksi',
         'approved_sm_at',
         'approved_smqa_at',
         'approved_gm_at',
         'approved_at'
+    ];
+
+    // PERBAIKAN: Tambahkan ini agar tanggal_surat dibaca sebagai Objek Tanggal
+    protected $casts = [
+        'tanggal_surat' => 'date',
+        'approved_sm_at' => 'datetime',
+        'approved_smqa_at' => 'datetime',
+        'approved_gm_at' => 'datetime',
+        'approved_at' => 'datetime',
     ];
 }

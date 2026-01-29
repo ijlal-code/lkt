@@ -16,7 +16,6 @@ class Sp2aController extends Controller
     public function index()
     {
         // Mengambil data urut dari yang terbaru
-        // Opsional: Anda bisa memfilter tampilan berdasarkan role jika diperlukan
         $sp2as = Sp2a::latest()->get();
         return view('sp2a.index', compact('sp2as'));
     }
@@ -90,7 +89,7 @@ class Sp2aController extends Controller
     }
 
     /**
-     * Halaman Edit (Hanya jika status dikembalikan/koreksi ke Staff)
+     * Halaman Edit (Hanya bisa diakses jika status dikembalikan/koreksi ke Staff)
      */
     public function edit($id)
     {
@@ -101,14 +100,16 @@ class Sp2aController extends Controller
             return back()->with('error', 'Dokumen sedang dalam proses approval dan tidak dapat diedit.');
         }
 
-        // Data untuk dropdown
+        // Data untuk dropdown (sama seperti create)
         $audities = User::where('role', 'auditi')->get();
         $auditors = User::where('role', 'auditor')->get();
         $k3s      = User::where('role', 'k3')->get();
         $staffs   = User::where('role', 'staff')->get();
         $atasans  = User::where('role', 'atasan_staff')->get();
 
-        return view('sp2a.edit', compact('sp2a', 'audities', 'auditors', 'k3s', 'staffs', 'atasans'));
+        // Kita bisa menggunakan view create dengan mengirimkan data $sp2a
+        // Pastikan di view create.blade.php Anda menangani pengisian value="" dengan old() atau $sp2a->field
+        return view('sp2a.create', compact('sp2a', 'audities', 'auditors', 'k3s', 'staffs', 'atasans'));
     }
 
     /**
@@ -127,21 +128,38 @@ class Sp2aController extends Controller
             'tanggal_surat' => 'required|date',
             'isi_surat' => 'required',
             'perihal' => 'required',
-             // Validasi field lain sesuai kebutuhan
+            // Validasi field lain sesuai kebutuhan
         ]);
 
-        // Update Data
-        $data = $request->except(['_token', '_method']);
+        // Persiapan Data Update
+        $auditi = User::find($request->kepada_user_id); // Jika user diganti
         
-        // RESET WORKFLOW
-        $data['current_step'] = 'sm'; // Kembali ke SM
-        $data['status'] = 'Revisi Terkirim (Menunggu Approval SM)';
-        $data['catatan_koreksi'] = null; // Hapus catatan koreksi lama
+        $data = [
+            'tanggal_surat' => $request->tanggal_surat,
+            'dari_nama' => $request->dari_nama,
+            'perihal' => $request->perihal,
+            'dasar_surat' => $request->dasar_surat,
+            'isi_surat' => $request->isi_surat,
+            'penanda_tangan_nama' => $request->penanda_tangan_nama,
+            'email_auditor' => $request->email_auditor,
+            'email_k3' => $request->email_k3,
+            'email_staff' => $request->email_staff,
+            'email_atasan' => $request->email_atasan,
+            
+            // Jika penerima diganti
+            'kepada_nama' => $auditi ? $auditi->name : $sp2a->kepada_nama,
+            'kepada_email' => $auditi ? $auditi->email : $sp2a->kepada_email,
 
-        // Reset Timestamp Approval sebelumnya (agar approver harus approve ulang)
-        $data['approved_sm_at'] = null;
-        $data['approved_smqa_at'] = null;
-        $data['approved_gm_at'] = null;
+            // RESET WORKFLOW
+            'current_step' => 'sm', // Kembali ke SM
+            'status' => 'Revisi Terkirim (Menunggu Approval SM)',
+            'catatan_koreksi' => null, // Hapus catatan koreksi lama
+
+            // Reset Timestamp Approval sebelumnya (agar approver harus approve ulang)
+            'approved_sm_at' => null,
+            'approved_smqa_at' => null,
+            'approved_gm_at' => null,
+        ];
 
         $sp2a->update($data);
 
@@ -180,8 +198,9 @@ class Sp2aController extends Controller
         if ($sp2a->current_step == 'gm' && $userRole == 'gm') {
             
             // Generate Nomor Surat Otomatis
-            $bulanRomawi = $this->getRomawi(date('n', strtotime($sp2a->tanggal_surat)));
-            $tahun = date('Y', strtotime($sp2a->tanggal_surat));
+            // Format: SP2A/001/INTERNAL/I/2026
+            $bulanRomawi = $this->getRomawi($sp2a->tanggal_surat->format('n'));
+            $tahun = $sp2a->tanggal_surat->format('Y');
             $noUrut = str_pad($sp2a->id, 3, '0', STR_PAD_LEFT);
             
             $nomorSurat = "SP2A/{$noUrut}/INTERNAL/{$bulanRomawi}/{$tahun}";
@@ -193,9 +212,6 @@ class Sp2aController extends Controller
                 'nomor_sp2a' => $nomorSurat, // Nomor disematkan di sini
             ]);
 
-            // Disini sistem otomatis "mengirim" ke user lain karena status sudah 'finished'
-            // dan mereka bisa melihatnya di index/show.
-            
             return back()->with('success', "Dokumen Final! Nomor $nomorSurat telah diterbitkan.");
         }
 
@@ -231,7 +247,7 @@ class Sp2aController extends Controller
     {
         $sp2a = Sp2a::findOrFail($id);
 
-        if ($sp2a->status == 'Approved By System') {
+        if ($sp2a->current_step == 'finished') {
             return back()->with('error', 'Tidak bisa menghapus dokumen yang sudah disetujui sistem (Final).');
         }
 

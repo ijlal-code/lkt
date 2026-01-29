@@ -7,7 +7,11 @@
         <a href="{{ route('sp2a.create') }}" class="btn btn-primary">+ Buat SP2A Baru</a>
     </div>
 
-    <div class="card">
+    @if(session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
+
+    <div class="card shadow-sm border-0">
         <div class="card-body table-responsive">
             <table class="table table-hover align-middle">
                 <thead class="table-light">
@@ -15,9 +19,8 @@
                         <th>Nomor SP2A</th>
                         <th>Tanggal</th>
                         <th>Kepada</th>
-                        <th>Email Tujuan</th>
-                        <th>Status</th>
-                        <th>Aksi</th>
+                        <th>Status Workflow</th>
+                        <th class="text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -25,38 +28,58 @@
                     <tr>
                         <td>
                             @if($sp2a->nomor_sp2a) 
-                                <span class="fw-bold">{{ $sp2a->nomor_sp2a }}</span> 
+                                <span class="fw-bold text-primary">{{ $sp2a->nomor_sp2a }}</span> 
                             @else 
-                                <span class="text-muted">Draft</span> 
+                                <span class="text-muted fst-italic">- Belum Terbit -</span> 
                             @endif
                         </td>
+
                         <td>{{ $sp2a->tanggal_surat->format('d M Y') }}</td>
-                        <td>{{ $sp2a->kepada_nama }}</td>
-                        <td>{{ $sp2a->kepada_email }}</td>
+                        
                         <td>
-                            @if($sp2a->status == 'Approved')
-                                <span class="badge bg-success">Approved</span>
+                            <div class="fw-bold">{{ $sp2a->kepada_nama }}</div>
+                            <small class="text-muted">{{ $sp2a->kepada_email }}</small>
+                        </td>
+
+                        <td>
+                            @if($sp2a->current_step == 'finished')
+                                <span class="badge bg-success"><i class="bi bi-check-circle"></i> Selesai (Approved)</span>
+                            @elseif($sp2a->current_step == 'staff')
+                                <span class="badge bg-danger"><i class="bi bi-exclamation-circle"></i> Perlu Perbaikan</span>
                             @else
-                                <span class="badge bg-warning text-dark">Draft</span>
+                                <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split"></i> {{ $sp2a->status }}</span>
                             @endif
                         </td>
+
                         <td class="text-center">
-    @if($sp2a->status == 'Draft')
-        <form action="{{ route('sp2a.process', $sp2a->id) }}" method="POST" class="d-inline">
-            @csrf
-            <button type="submit" class="btn btn-sm btn-primary fw-bold" onclick="return confirm('Proses SP2A ini? Email akan dikirim ke semua pihak terkait.')">
-                <i class="bi bi-send-check"></i> PROSES
-            </button>
-        </form>
-        @else
-        <button class="btn btn-sm btn-secondary" disabled>Selesai</button>
-        <a href="#" class="btn btn-sm btn-info text-white">Unduh PDF</a>
-    @endif
-</td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ route('sp2a.show', $sp2a->id) }}" class="btn btn-sm btn-outline-primary" title="Lihat Detail">
+                                    <i class="bi bi-eye"></i> Detail
+                                </a>
+
+                                @if($sp2a->current_step == 'finished')
+                                    <a href="#" class="btn btn-sm btn-outline-success" title="Unduh PDF">
+                                        <i class="bi bi-file-pdf"></i>
+                                    </a>
+                                @endif
+
+                                @if($sp2a->current_step == 'staff' && Auth::user()->role == 'staff')
+                                    <a href="{{ route('sp2a.edit', $sp2a->id) }}" class="btn btn-sm btn-warning">
+                                        <i class="bi bi-pencil"></i> Revisi
+                                    </a>
+                                @endif
+                            </div>
+                        </td>
                     </tr>
                     @endforeach
                 </tbody>
             </table>
+            
+            @if($sp2as->isEmpty())
+                <div class="text-center p-4 text-muted">
+                    <p>Belum ada dokumen SP2A.</p>
+                </div>
+            @endif
         </div>
     </div>
 </div>
