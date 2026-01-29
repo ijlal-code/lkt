@@ -6,8 +6,8 @@ use App\Http\Controllers\LtkController;
 use App\Http\Controllers\Sp2aController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\PesanController; // Controller Baru
-use App\Http\Controllers\AuthController; // <--- Import AuthController
+use App\Http\Controllers\PesanController; 
+use App\Http\Controllers\AuthController; 
 
 // --- ROUTE AUTENTIKASI MANUAL ---
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -31,8 +31,7 @@ Route::get('/', function () {
 });
 
 
-
-// --- GROUP ADMIN (Akses Penuh) ---
+// --- GROUP ADMIN (Akses Penuh: Manajemen User, Kontak, LTK) ---
 Route::middleware(['auth', 'role:admin'])->group(function () {
     
     // Dashboard & LKT
@@ -43,24 +42,33 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::resource('contacts', ContactController::class);
     Route::resource('users', UserController::class);
 
-    
+    // NOTE: SP2A dipindahkan dari sini agar Staff & Manager bisa akses
 });
 
-Route::middleware(['auth', 'role:admin,staff'])->group(function () {
-    Route::resource('sp2a', Sp2aController::class);
-    Route::post('/sp2a/{id}/process', [Sp2aController::class, 'process'])->name('sp2a.process');
-});
 
-// --- GROUP USER (K3, Auditor, Staff, dll) ---
+// --- GROUP INTERNAL / UMUM (Staff, K3, Auditor, Manager, Admin) ---
 Route::middleware(['auth'])->group(function () {
+    
+    // --- FITUR PESAN (Untuk User/Auditi) ---
     Route::get('/pesan', [PesanController::class, 'index'])->name('pesan.index');
-    
-    // Halaman yang ada bingkainya
     Route::get('/pesan/{id}/preview', [PesanController::class, 'previewPage'])->name('pesan.preview');
-    
-    // Endpoint khusus untuk konten PDF-nya
     Route::get('/pesan/{id}/show', [PesanController::class, 'show'])->name('pesan.show');
-    
-    // Proses Approve
     Route::post('/pesan/{id}/approve', [PesanController::class, 'approve'])->name('pesan.approve');
+
+    // --- MANAJEMEN SP2A (WORKFLOW BARU) ---
+    // 1. Resource standar (index, create, store, edit, update, destroy, show)
+    Route::resource('sp2a', Sp2aController::class);
+
+    // 2. Route Tambahan untuk Workflow Approval & Koreksi
+    // Route untuk melihat detail (bisa pakai default show, tapi kita definisikan eksplisit jika butuh custom URL)
+    // Route::get('/sp2a/{id}/show', [Sp2aController::class, 'show'])->name('sp2a.show'); // (Opsional karena sudah ada di resource)
+
+    // Route Action Approval (SM -> SMQA -> GM)
+    Route::post('/sp2a/{id}/approve', [Sp2aController::class, 'approve'])->name('sp2a.approve');
+    
+    // Route Action Koreksi (Kembalikan ke Staff)
+    Route::post('/sp2a/{id}/koreksi', [Sp2aController::class, 'koreksi'])->name('sp2a.koreksi');
+    
+    // Route Proses Penomoran (Opsional, jika masih dipakai manual oleh Admin, tapi sekarang otomatis di GM)
+    Route::post('/sp2a/{id}/process', [Sp2aController::class, 'process'])->name('sp2a.process');
 });

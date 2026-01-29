@@ -1,125 +1,93 @@
 @extends('layouts.app')
 
 @section('content')
-<style>
-    /* Mengatur tinggi maksimal dan scroll internal CKEditor 5 */
-    .ck-editor__editable_inline {
-        min-height: 300px;
-        max-height: 500px; /* Batas tinggi sebelum scroll muncul */
-        overflow-y: auto;
-    }
-</style>
-
-<div class="container">
-    <div class="card shadow-sm">
-        <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Buat SP2A Baru (Sistem Role User)</h5>
-            <small class="text-white-50">Admin Panel</small>
+<div class="container py-4">
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-header bg-primary text-white p-3">
+            <h4 class="mb-0 fw-bold"><i class="bi bi-file-earmark-plus me-2"></i>Buat SP2A Baru</h4>
         </div>
-        <div class="card-body">
+        <div class="card-body p-4">
+            {{-- Tampilkan Error Validasi jika ada --}}
+            @if ($errors->any())
+                <div class="alert alert-danger">
+                    <ul class="mb-0">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             <form action="{{ route('sp2a.store') }}" method="POST">
                 @csrf
+                <div class="row g-3">
+                    {{-- Bagian Penerima (Auditi) --}}
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Pilih Auditi (Penerima)</label>
+                        {{-- Pastikan name="kepada_nama" ada agar tidak null di controller --}}
+                        <select name="kepada_nama" id="kepada_nama" class="form-select @error('kepada_nama') is-invalid @enderror" required>
+                            <option value="">-- Pilih Nama Auditi --</option>
+                            @foreach($contacts as $contact)
+                                <option value="{{ $contact->name }}" data-email="{{ $contact->email }}">{{ $contact->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Email Auditi</label>
+                        {{-- Input email otomatis terisi via JS, dikirim via name="kepada_email" --}}
+                        <input type="email" name="kepada_email" id="kepada_email" class="form-control bg-light @error('kepada_email') is-invalid @enderror" readonly required>
+                    </div>
 
-                <div class="row mb-3">
+                    {{-- Metadata Pengirim --}}
+                    <input type="hidden" name="dari_nama" value="{{ Auth::user()->name }}">
+                    <input type="hidden" name="email_staff" value="{{ Auth::user()->email }}">
+
                     <div class="col-md-6">
                         <label class="form-label fw-bold">Tanggal Surat</label>
                         <input type="date" name="tanggal_surat" class="form-control" value="{{ date('Y-m-d') }}" required>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold text-danger">Kepada (Auditi)</label>
-                        <select name="kepada_user_id" class="form-select" required>
-                            <option value="">-- Pilih Akun Auditi --</option>
-                            @foreach($audities as $u)
-                                <option value="{{ $u->id }}">{{ $u->name }} ({{ $u->email }})</option>
-                            @endforeach
-                        </select>
-                        <div class="form-text">Penerima utama surat peringatan.</div>
-                    </div>
-                </div>
 
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold">Dari (Pengirim)</label>
-                        <input type="text" name="dari_nama" class="form-control" placeholder="Misal: Kepala Departemen Audit Internal" required>
-                    </div>
                     <div class="col-md-6">
                         <label class="form-label fw-bold">Perihal</label>
                         <input type="text" name="perihal" class="form-control" value="Surat Peringatan 2A" required>
                     </div>
-                </div>
 
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Dasar Penerbitan Surat / Temuan</label>
-                    <textarea name="dasar_surat" class="form-control" rows="2" placeholder="Contoh: Berdasarkan temuan LKT No. 001/AUDIT/2026 tanggal 20 Januari..." required></textarea>
-                </div>
+                    <div class="col-md-12">
+                        <label class="form-label fw-bold">Dasar Surat</label>
+                        <input type="text" name="dasar_surat" class="form-control" placeholder="Contoh: LKT/2026/001" required>
+                    </div>
 
-                <div class="mb-4">
-                     <label class="form-label fw-bold">Isi Surat Lengkap</label>
-                     <textarea id="editor" name="isi_surat">
-                        <p>Dengan hormat,</p>
-                        <p>Sehubungan dengan temuan ketidaksesuaian yang belum ditindaklanjuti, maka kami sampaikan hal-hal berikut:</p>
-                        <ul>
-                            <li>Detail Temuan 1...</li>
-                            <li>Detail Temuan 2...</li>
-                        </ul>
-                        <p>Mohon segera melakukan perbaikan sebelum tanggal yang ditentukan.</p>
-                     </textarea>
-                     <div class="form-text text-muted">
-                        Tips: Anda bisa <strong>Copy-Paste tabel</strong> langsung dari Microsoft Word ke sini.
-                     </div>
-                </div>
-                
-                <hr>
+                    {{-- Isi Surat dengan CKEditor --}}
+                    <div class="col-12">
+                        <label class="form-label fw-bold">Isi Surat</label>
+                        <textarea name="isi_surat" id="isi_surat" class="form-control @error('isi_surat') is-invalid @enderror"></textarea>
+                    </div>
 
-                <h6 class="fw-bold mb-3">Tembusan (CC) ke Akun Terdaftar:</h6>
-                
-                <div class="row g-3 bg-light p-3 rounded border mb-4">
-                    <div class="col-md-6">
-                        <label class="fw-bold small text-muted">Auditor</label>
-                        <select name="email_auditor" class="form-select form-select-sm">
-                            <option value="">- Tidak Ada -</option>
-                            @foreach($auditors as $u) <option value="{{ $u->email }}">{{ $u->name }}</option> @endforeach
-                        </select>
+                    {{-- Tembusan (CC) --}}
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold text-muted">CC Auditor (Opsional)</label>
+                        <input type="email" name="email_auditor" class="form-control" placeholder="auditor@example.com">
                     </div>
-                    <div class="col-md-6">
-                        <label class="fw-bold small text-muted">Staff K3 (Approver)</label>
-                        <select name="email_k3" class="form-select form-select-sm">
-                            <option value="">- Tidak Ada -</option>
-                            @foreach($k3s as $u) <option value="{{ $u->email }}">{{ $u->name }}</option> @endforeach
-                        </select>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold text-muted">CC K3 (Opsional)</label>
+                        <input type="email" name="email_k3" class="form-control" placeholder="k3@example.com">
                     </div>
-                    <div class="col-md-6">
-                        <label class="fw-bold small text-muted">Staff Unit</label>
-                        <select name="email_staff" class="form-select form-select-sm">
-                            <option value="">- Tidak Ada -</option>
-                            @foreach($staffs as $u) <option value="{{ $u->email }}">{{ $u->name }}</option> @endforeach
-                        </select>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold text-muted">CC Atasan (Opsional)</label>
+                        <input type="email" name="email_atasan" class="form-control" placeholder="atasan@example.com">
                     </div>
-                    <div class="col-md-6">
-                        <label class="fw-bold small text-muted">Atasan Staff</label>
-                        <select name="email_atasan" class="form-select form-select-sm">
-                            <option value="">- Tidak Ada -</option>
-                            @foreach($atasans as $u) <option value="{{ $u->email }}">{{ $u->name }}</option> @endforeach
-                        </select>
+
+                    {{-- Penanda Tangan --}}
+                    <div class="col-md-12">
+                        <label class="form-label fw-bold text-primary">Nama Penanda Tangan (Final GM)</label>
+                        <input type="text" name="penanda_tangan_nama" class="form-control border-primary" placeholder="Masukkan Nama Lengkap GM Internal Audit" required>
                     </div>
                 </div>
 
-                <div class="row">
-                    <div class="col-md-6 offset-md-3 text-center">
-                        <div class="card bg-light border-0">
-                            <div class="card-body">
-                                <label class="fw-bold mb-2">Nama Penanda Tangan (Di Surat)</label>
-                                <input type="text" name="penanda_tangan_nama" class="form-control text-center fw-bold" placeholder="Nama Manager / Auditor Utama" required>
-                                <small class="text-muted d-block mt-1">Nama ini akan muncul di bagian bawah surat PDF</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="d-flex justify-content-end gap-2 mt-5">
-                    <a href="{{ route('sp2a.index') }}" class="btn btn-secondary px-4">Batal</a>
-                    <button type="submit" class="btn btn-danger px-4 fw-bold">
-                        <i class="bi bi-save me-1"></i> Simpan Draft
+                <div class="mt-4 text-end border-top pt-3">
+                    <button type="reset" class="btn btn-light me-2">Reset Form</button>
+                    <button type="submit" class="btn btn-primary px-5 py-2 shadow-sm fw-bold">
+                        <i class="bi bi-send-check me-2"></i>SIMPAN & KIRIM KE SM
                     </button>
                 </div>
             </form>
@@ -127,23 +95,27 @@
     </div>
 </div>
 
-<script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/classic/ckeditor.js"></script>
+{{-- Script Pendukung --}}
+<script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
 <script>
-    ClassicEditor
-        .create(document.querySelector('#editor'), {
-            toolbar: [ 
-                'heading', '|', 
-                'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|', 
-                'outdent', 'indent', '|',
-                'blockQuote', 'insertTable', 'undo', 'redo'
-            ],
-            language: 'id'
-        })
-        .then(editor => {
-            console.log('Editor berhasil dimuat');
-        })
-        .catch(error => {
-            console.error(error);
-        });
+    // Inisialisasi CKEditor
+    CKEDITOR.replace('isi_surat', {
+        height: 300,
+        removePlugins: 'elementspath',
+        resize_enabled: false
+    });
+
+    // Script untuk mengisi email otomatis saat Nama Auditi dipilih
+    document.getElementById('kepada_nama').addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const email = selectedOption.getAttribute('data-email');
+        const emailInput = document.getElementById('kepada_email');
+        
+        if (email) {
+            emailInput.value = email;
+        } else {
+            emailInput.value = '';
+        }
+    });
 </script>
 @endsection
