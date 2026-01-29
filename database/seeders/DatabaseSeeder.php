@@ -14,6 +14,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+      
+    $this->call([
+        UserRoleSeeder::class,
+    ]);
+
         // 1. Akun ADMIN (Pembuat Surat)
         User::create([
             'name' => 'Administrator Audit',

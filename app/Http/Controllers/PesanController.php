@@ -79,36 +79,44 @@ class PesanController extends Controller
     /**
      * PROSES APPROVAL OLEH K3
      */
-    public function approve($id)
-    {
-        $sp2a = Sp2a::findOrFail($id);
+    public function approve($id, Request $request)
+{
+    $sp2a = Sp2a::findOrFail($id);
+    $user = Auth::user();
 
-        if (Auth::user()->role != 'k3') {
-            return back()->with('error', 'Hanya Role K3 yang bisa melakukan Approval.');
-        }
-
-        if ($sp2a->status == 'Approved By System') {
-            return back()->with('error', 'Dokumen sudah disetujui sebelumnya.');
-        }
-
-        // 1. Update Status
+    // 1. Logika Tombol Koreksi (Jika ada input koreksi)
+    if ($request->has('koreksi')) {
         $sp2a->update([
-            'status' => 'Approved By System',
-            'approved_at' => now(),
-            // Logika: Jika ingin semua orang bisa melihat, kita bisa menandai dokumen ini 
-            // sebagai dokumen publik/broadcast di kolom tertentu jika ada, 
-            // atau membiarkan logika index yang menanganinya.
+            'current_step' => 'staff', // Balikkan ke staff
+            'status' => 'Ditolak/Perlu Koreksi',
+            'catatan_koreksi' => $request->catatan_koreksi
         ]);
-
-        // Pengiriman email dihentikan sementara sesuai permintaan
-        /* try {
-            $allUserEmails = User::pluck('email')->toArray(); 
-            if (!empty($allUserEmails)) {
-                Mail::bcc($allUserEmails)->send(new Sp2aNotification($sp2a, $pdfContent));
-            }
-        } catch (\Exception $e) { ... } 
-        */
-
-        return redirect()->route('pesan.index')->with('success', 'Dokumen DISETUJUI! Sekarang semua user dapat melihat dokumen ini di kotak masuk mereka.');
+        return back()->with('success', 'Koreksi telah dikirim kembali ke Staff.');
     }
+
+    // 2. Logika Approval Berjenjang
+    if ($user->role == 'sm' && $sp2a->current_step == 'sm') {
+        $sp2a->update(['current_step' => 'smqa', 'approved_sm_at' => now()]);
+    } 
+    elseif ($user->role == 'smqa' && $sp2a->current_step == 'smqa') {
+        $sp2a->update(['current_step' => 'gm', 'approved_smqa_at' => now()]);
+    } 
+    elseif ($user->role == 'gm' && $sp2a->current_step == 'gm') {
+        // TAHAP FINAL: Generate Nomor & Stamp
+        $nomorBaru = "SP2A/" . date('Ymd') . "/" . str_pad($sp2a->id, 4, '0', STR_PAD_LEFT);
+        
+        $sp2a->update([
+            'nomor_sp2a' => $nomorBaru,
+            'status' => 'Approved By System',
+            'current_step' => 'finished',
+            'approved_at' => now(),
+            'approved_gm_at' => now()
+        ]);
+        
+        // Di sini otomatis terkirim ke role lain karena status sudah 'Approved By System'
+        // (Sesuai logika index() yang kita buat sebelumnya)
+    }
+
+    return redirect()->route('pesan.index')->with('success', 'Dokumen berhasil diproses ke tahap selanjutnya.');
+}
 }

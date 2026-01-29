@@ -1,181 +1,150 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Surat Peringatan 2A</title>
+    <meta charset="utf-8">
+    <title>SP2A - {{ $sp2a->nomor_sp2a ?? 'Draft' }}</title>
     <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            font-size: 11pt; 
-            line-height: 1.4; 
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 12pt;
+            line-height: 1.5;
             color: #000;
-            margin: 0; 
+            margin: 0;
             padding: 0;
         }
-        
-        /* HEADER SURAT */
-        .header { 
-            text-align: center; 
-            margin-bottom: 30px; 
-            border-bottom: 3px double #000; 
-            padding-bottom: 10px; 
+        .header-table {
+            width: 100%;
+            border-bottom: 3px solid #000;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
         }
-        .header h3 { 
-            margin: 0; 
-            text-decoration: underline; 
-            font-size: 14pt;
+        .header-logo {
+            width: 80px;
+        }
+        .header-text {
+            text-align: center;
+        }
+        .header-text h2 {
+            margin: 0;
+            font-size: 16pt;
             text-transform: uppercase;
         }
-        .header p { 
-            margin: 5px 0 0; 
-            font-size: 11pt;
+        .content {
+            margin: 20px 0;
         }
-
-        /* TABEL INFORMASI (Kepada, Dari, Perihal) */
-        .info-table { 
-            width: 100%; 
-            margin-bottom: 25px; 
+        .info-table {
+            width: 100%;
+            margin-bottom: 20px;
         }
-        .info-table td { 
-            vertical-align: top; 
-            padding: 3px 0; 
+        .info-table td {
+            vertical-align: top;
+            padding: 2px 0;
         }
-        .label-col { width: 100px; }
-        .sep-col { width: 15px; text-align: center; }
-
-        /* ISI SURAT (Hasil dari Editor) */
-        .content { 
-            text-align: justify; 
-            margin-bottom: 40px;
+        .isi-surat {
+            text-align: justify;
+            min-height: 300px;
         }
-        /* Styling khusus agar list/tabel dari Word/CKEditor rapi di PDF */
-        .content ul, .content ol { margin-left: 20px; padding-left: 15px; }
-        .content li { margin-bottom: 5px; }
-        .content p { margin-top: 0; margin-bottom: 10px; }
-        .content table { 
-            width: 100%; border-collapse: collapse; margin: 10px 0; 
-        }
-        .content table, .content th, .content td { 
-            border: 1px solid black; padding: 5px; 
-        }
-
-        /* AREA TANDA TANGAN */
-        .ttd-container {
+        .footer-table {
             width: 100%;
             margin-top: 50px;
-            position: relative;
-            height: 160px; /* Tinggi area tanda tangan */
         }
-        .ttd-box {
-            position: absolute;
-            right: 0;
+        .ttd-container {
             width: 250px;
             text-align: center;
         }
-
-        /* CAP DIGITAL (STAMP) */
-        .digital-stamp {
-            border: 3px solid #28a745; 
-            color: #28a745; 
-            padding: 10px; 
-            display: inline-block;
+        /* Style khusus untuk tanda tangan otomatis */
+        .approved-text {
+            font-family: 'Courier', monospace;
+            font-size: 11pt;
             font-weight: bold;
-            font-family: 'Courier New', Courier, monospace;
+            color: #000;
+            margin-bottom: -3px; /* Merapatkan ke garis nama */
             text-transform: uppercase;
-            border-radius: 5px;
-            margin: 15px 0;
-            /* Efek Miring agar terlihat seperti cap basah */
-            transform: rotate(-8deg); 
-            opacity: 0.9;
         }
         .timestamp {
-            display: block;
             font-size: 8pt;
-            margin-top: 5px;
-            border-top: 1px solid #28a745;
-            padding-top: 2px;
-            color: #28a745;
+            font-weight: normal;
         }
-
-        /* TEMBUSAN / CC */
-        .cc {
-            clear: both;
-            margin-top: 40px;
-            font-size: 9pt;
-            color: #444;
-        }
-        .cc b { text-decoration: underline; color: #000; }
-        .cc ul { margin-top: 5px; padding-left: 20px; list-style-type: circle; }
-        .cc li { margin-bottom: 2px; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h3>SURAT PERINGATAN 2A (SP2A)</h3>
-        <p>Nomor: {{ $sp2a->nomor_sp2a ?? 'DRAFT / BELUM DIPROSES' }}</p>
-    </div>
-
-    <table class="info-table">
+    <table class="header-table">
         <tr>
-            <td class="label-col">Kepada Yth.</td>
-            <td class="sep-col">:</td>
-            <td><strong>{{ $sp2a->kepada_nama }}</strong></td>
-        </tr>
-        <tr>
-            <td class="label-col">Dari</td>
-            <td class="sep-col">:</td>
-            <td>{{ $sp2a->dari_nama }}</td>
-        </tr>
-        <tr>
-            <td class="label-col">Tanggal</td>
-            <td class="sep-col">:</td>
-            <td>{{ \Carbon\Carbon::parse($sp2a->tanggal_surat)->translatedFormat('d F Y') }}</td>
-        </tr>
-        <tr>
-            <td class="label-col">Perihal</td>
-            <td class="sep-col">:</td>
-            <td>{{ $sp2a->perihal }}</td>
+            <td class="header-logo">
+                <img src="{{ public_path('img/logo-tonasa.png') }}" width="70">
+            </td>
+            <td class="header-text">
+                <h2>Internal Audit Department</h2>
+                <p style="margin: 0; font-size: 10pt;">PT Semen Tonasa - Pangkep, Sulawesi Selatan</p>
+            </td>
+            <td class="header-logo" style="text-align: right;">
+                <img src="{{ public_path('img/logo-internal-audit.png') }}" width="70">
+            </td>
         </tr>
     </table>
 
-    <hr style="border: 0; border-top: 1px solid #ccc; margin-bottom: 20px;">
-
     <div class="content">
-        {!! $sp2a->isi_surat !!}
-    </div>
-
-    <div class="ttd-container" style="margin-top: 30px; float: right; width: 250px; text-align: center;">
-    <div class="ttd-box">
-        <p style="margin-bottom: 0;">Hormat Kami,</p>
-        
-        <div style="height: 60px;"></div>
-
-        <div style="display: flex; flex-direction: column; align-items: center;">
-            @if($sp2a->status == 'Approved By System')
-                <div style="font-family: 'Courier', monospace; font-size: 11px; font-weight: bold; color: #000; margin-bottom: -3px;">
-                    APPROVED BY SYSTEM
-                </div>
-            @endif
-
-            <p style="margin-top: 0; margin-bottom: 0;">
-                <strong><u>{{ $sp2a->penanda_tangan_nama }}</u></strong>
+        <center>
+            <h3 style="text-decoration: underline; margin-bottom: 5px;">SURAT PERINGATAN 2A (SP2A)</h3>
+            <p style="margin-top: 0;">
+                Nomor: {{ $sp2a->status == 'Approved By System' ? $sp2a->nomor_sp2a : '..........................................' }}
             </p>
-        </div>
-    </div>
-</div>
-<div style="clear: both;"></div>
+        </center>
 
-    @if($sp2a->email_auditor || $sp2a->email_k3 || $sp2a->email_staff || $sp2a->email_atasan)
-    <div class="cc">
-        <b>Tembusan Disampaikan Kepada Yth:</b>
-        <ul>
-            @if($sp2a->email_auditor) <li>Auditor ({{ $sp2a->email_auditor }})</li> @endif
-            @if($sp2a->email_k3)      <li>Staff K3 ({{ $sp2a->email_k3 }})</li> @endif
-            @if($sp2a->email_staff)   <li>Staff Unit ({{ $sp2a->email_staff }})</li> @endif
-            @if($sp2a->email_atasan)  <li>Atasan Staff ({{ $sp2a->email_atasan }})</li> @endif
-        </ul>
+        <table class="info-table">
+            <tr>
+                <td width="15%">Tanggal</td>
+                <td width="2%">:</td>
+                <td>{{ \Carbon\Carbon::parse($sp2a->tanggal_surat)->format('d F Y') }}</td>
+            </tr>
+            <tr>
+                <td>Kepada</td>
+                <td>:</td>
+                <td><strong>{{ $sp2a->kepada_nama }}</strong></td>
+            </tr>
+            <tr>
+                <td>Perihal</td>
+                <td>:</td>
+                <td>{{ $sp2a->perihal }}</td>
+            </tr>
+        </table>
+
+        <div class="isi-surat">
+            {!! $sp2a->isi_surat !!}
+        </div>
+
+        <table width="100%" style="margin-top: 40px;">
+            <tr>
+                <td width="60%"></td>
+                <td width="40%" align="center">
+                    <p style="margin-bottom: 0;">Hormat Kami,</p>
+                    
+                    <div style="height: 50px; position: relative;">
+                        @if($sp2a->status == 'Approved By System')
+                            <div style="margin-top: 30px;">
+                                <div class="approved-text">APPROVED BY SYSTEM</div>
+                            </div>
+                        @else
+                            <div style="height: 50px;"></div>
+                        @endif
+                    </div>
+
+                    <p style="margin-top: 0; margin-bottom: 0;">
+                        <strong><u>{{ $sp2a->penanda_tangan_nama }}</u></strong>
+                    </p>
+                    <p style="margin-top: 0; font-size: 10pt;">Kepala Departemen Audit</p>
+                </td>
+            </tr>
+        </table>
     </div>
-    @endif
+
+    <div style="position: fixed; bottom: 0; width: 100%; font-size: 8pt; color: #666; border-top: 1px solid #ddd; padding-top: 5px;">
+        Dokumen ini diterbitkan secara sistem melalui Sistem Audit Internal PT Semen Tonasa.
+        @if($sp2a->status == 'Approved By System')
+             Diverifikasi pada: {{ \Carbon\Carbon::parse($sp2a->approved_at)->format('d/m/Y H:i') }}
+        @endif
+    </div>
 
 </body>
 </html>
