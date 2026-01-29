@@ -58,6 +58,8 @@ Route::middleware(['auth'])->group(function () {
 
     // 1. Route Riwayat Approval (TAMBAHAN BARU) - Taruh SEBELUM Resource
     Route::get('/sp2a/riwayat', [Sp2aController::class, 'history'])->name('sp2a.history');
+    // Route Download PDF
+    Route::get('/sp2a/{id}/download', [Sp2aController::class, 'downloadPdf'])->name('sp2a.download');
     // --- MANAJEMEN SP2A (WORKFLOW BARU) ---
     // 1. Resource standar (index, create, store, edit, update, destroy, show)
     Route::resource('sp2a', Sp2aController::class);

@@ -10,11 +10,11 @@
             <p class="text-muted small mb-0">ID Transaksi: #{{ $sp2a->id }} | Tahap Saat Ini: <span class="badge bg-primary text-uppercase">{{ $sp2a->current_step }}</span></p>
         </div>
         <div class="d-flex flex-wrap gap-2">
-            @if($sp2a->status == 'Approved By System')
+           
                 <a href="{{ route('pesan.show', $sp2a->id) }}?download=true" class="btn btn-outline-danger shadow-sm flex-grow-1">
                     <i class="bi bi-cloud-arrow-down-fill me-1"></i> Download PDF
                 </a>
-            @endif
+            
             <a href="{{ route('pesan.index') }}" class="btn btn-secondary shadow-sm flex-grow-1">
                 <i class="bi bi-arrow-left me-1"></i> Kembali
             </a>
