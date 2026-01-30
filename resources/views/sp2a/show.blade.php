@@ -11,10 +11,9 @@
                 Status: {{ $sp2a->status }}
             </span>
         </div>
-        {{-- TOMBOL KEMBALI --}}
-            <a href="{{ route('sp2a.index') }}" class="btn btn-outline-secondary me-2">
-                <i class="bi bi-arrow-left"></i> Kembali
-            </a>
+     <a href="{{ url()->previous() }}" class="btn btn-outline-secondary me-2">
+    <i class="bi bi-arrow-left"></i> Kembali
+</a>
             
             {{-- TOMBOL DOWNLOAD PDF --}}
             <a href="{{ route('sp2a.download', $sp2a->id) }}" class="btn btn-danger shadow-sm">
