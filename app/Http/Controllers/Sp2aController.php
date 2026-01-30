@@ -21,27 +21,39 @@ class Sp2aController extends Controller
     /**
      * Halaman Riwayat Approval (History)
      */
-    public function history()
-    {
-        $role = Auth::user()->role;
-        $query = Sp2a::query();
+    public function history(Request $request) // Tambahkan Request $request
+{
+    $role = Auth::user()->role;
+    $query = Sp2a::query();
 
-        if ($role == 'sm') {
-            $query->whereNotNull('approved_sm_at');
-        } 
-        elseif ($role == 'smqa') {
-            $query->whereNotNull('approved_smqa_at');
-        } 
-        elseif ($role == 'gm') {
-            $query->whereNotNull('approved_gm_at');
-        } 
-        else {
-            $query->where('status', 'Approved By System');
-        }
-
-        $riwayat = $query->latest()->get();
-        return view('sp2a.history', compact('riwayat'));
+    // 1. LOGIKA ROLE (Tetap seperti sebelumnya)
+    if ($role == 'sm') {
+        $query->whereNotNull('approved_sm_at');
+    } 
+    elseif ($role == 'smqa') {
+        $query->whereNotNull('approved_smqa_at');
+    } 
+    elseif ($role == 'gm') {
+        $query->whereNotNull('approved_gm_at');
+    } 
+    else {
+        $query->where('status', 'Approved By System');
     }
+
+    // 2. TAMBAHAN: LOGIKA FILTER BULAN & TAHUN
+    if ($request->filled('bulan')) {
+        $query->whereMonth('tanggal_surat', $request->bulan);
+    }
+
+    if ($request->filled('tahun')) {
+        $query->whereYear('tanggal_surat', $request->tahun);
+    }
+
+    $riwayat = $query->latest()->get();
+    
+    // Kirim data riwayat ke view
+    return view('sp2a.history', compact('riwayat'));
+}
 
     public function create()
     {
