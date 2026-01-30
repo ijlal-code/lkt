@@ -43,6 +43,7 @@
             transition: all 0.25s ease-out;
         }
 
+        /* Styling khusus untuk LOGO ATAS saja */
         #sidebar-wrapper .sidebar-heading {
             padding: 1.5rem 1.25rem;
             font-size: 1.25rem;
@@ -162,7 +163,8 @@
 
                 @auth
                     @if(Auth::user()->role == 'admin' || Auth::user()->role == 'staff')
-                        <div class="sidebar-heading mt-2 border-top pt-3 small text-uppercase text-muted" style="font-size: 0.75rem;">
+                        {{-- UBAH DISINI: Hapus class 'sidebar-heading' agar tidak ada padding besar --}}
+                        <div class="px-3 mt-3 mb-1 text-uppercase text-muted fw-bold" style="font-size: 0.75rem;">
                             Manajer Admin
                         </div>
 
@@ -186,7 +188,8 @@
                             <i class="bi bi-people-fill me-2"></i> Manajemen User
                         </a>
                     @else
-                        <div class="sidebar-heading mt-2 border-top pt-3 small text-uppercase text-muted" style="font-size: 0.75rem;">
+                        {{-- UBAH DISINI: Penyesuaian yang sama untuk role lain --}}
+                        <div class="px-3 mt-3 mb-1 text-uppercase text-muted fw-bold" style="font-size: 0.75rem;">
                             Menu Personil
                         </div>
 
@@ -195,23 +198,15 @@
                         </a>
                     @endif
 
-                    {{-- TOMBOL RIWAYAT PESAN (Hanya untuk SM, SMQA, GM) --}}
-    @if(Auth::check() && in_array(Auth::user()->role, ['sm', 'smqa', 'gm']))
-    <li class="nav-item mt-2">
-        <div class="text-muted small fw-bold text-uppercase px-3 mb-1" style="font-size: 0.7rem;">Monitoring</div>
-        <a class="nav-link {{ request()->routeIs('sp2a.history') ? 'active text-success' : '' }}" href="{{ route('sp2a.history') }}">
-            <i class="bi bi-clock-history me-2"></i> Riwayat Approval
-        </a>
-    </li>
-    @endif
-
-    @if(Auth::check() && Auth::user()->role == 'admin')
-    <li class="nav-item">
-        <a class="nav-link" href="{{ route('users.index') }}">
-            <i class="bi bi-people me-2"></i> Manajemen User
-        </a>
-    </li>
-    @endif
+                    {{-- Monitoring Section (SM, SMQA, GM) --}}
+                    @if(Auth::check() && in_array(Auth::user()->role, ['sm', 'smqa', 'gm']))
+                        <div class="px-3 mt-3 mb-1 text-uppercase text-muted fw-bold" style="font-size: 0.75rem;">
+                            Monitoring
+                        </div>
+                        <a class="list-group-item list-group-item-action {{ request()->routeIs('sp2a.history') ? 'active' : '' }}" href="{{ route('sp2a.history') }}">
+                            <i class="bi bi-clock-history me-2"></i> Riwayat Approval
+                        </a>
+                    @endif
                 @endauth
             </div>
 
@@ -239,7 +234,8 @@
                     <i class="bi bi-list fs-4"></i>
                 </button>
                 <span class="fw-bold">SP2A APP</span>
-                <div></div> </div>
+                <div></div> 
+            </div>
 
             <div class="container-fluid p-4">
                 @if(session('success'))
@@ -275,7 +271,6 @@
                 });
             }
 
-            // Close sidebar when clicking overlay on mobile
             if (overlay) {
                 overlay.addEventListener('click', () => {
                     wrapper.classList.remove('toggled');
@@ -283,7 +278,7 @@
             }
         });
     </script>
-    {{-- TAMBAHKAN INI: SWEETALERT2 CDN --}}
+    {{-- SWEETALERT2 --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>
 </html>

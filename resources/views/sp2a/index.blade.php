@@ -3,120 +3,209 @@
 @section('content')
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="fw-bold mb-0 text-secondary"><i class="bi bi-folder2-open me-2"></i>Daftar SP2A</h3>
+        <div>
+            <h2 class="fw-bold text-dark"><i class="bi bi-file-earmark-text-fill text-primary me-2"></i> Daftar SP2A</h2>
+            <p class="text-muted mb-0">Kelola dokumen Surat Peringatan Tahap 2A</p>
+        </div>
         @if(in_array(Auth::user()->role, ['admin', 'staff']))
-        <a href="{{ route('sp2a.create') }}" class="btn btn-primary shadow-sm rounded-pill px-4">
-            <i class="bi bi-plus-lg me-2"></i>Buat Baru
+        <a href="{{ route('sp2a.create') }}" class="btn btn-primary shadow-sm fw-bold">
+            <i class="bi bi-plus-lg me-1"></i> Buat SP2A Baru
         </a>
         @endif
     </div>
 
-    <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light text-secondary">
-                    <tr>
-                        <th class="px-4 py-3">Nomor / Tanggal</th>
-                        <th class="py-3">Kepada</th>
-                        <th class="py-3">Status Realtime</th>
-                        <th class="py-3 text-center" style="width: 140px;">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($sp2as as $sp2a)
-                    <tr>
-                        <td class="px-4">
-                            @if($sp2a->nomor_sp2a) 
-                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary mb-1">{{ $sp2a->nomor_sp2a }}</span>
-                            @else 
-                                <span class="badge bg-secondary bg-opacity-10 text-secondary border mb-1">Proses Approval</span>
-                            @endif
-                            <div class="small text-muted">{{ $sp2a->tanggal_surat->format('d M Y') }}</div>
-                        </td>
-                        
-                        <td>
-                            <div class="fw-bold text-dark">{{ $sp2a->kepada_nama }}</div>
-                            <small class="text-muted">Dari: {{ $sp2a->dari_nama }}</small>
-                        </td>
-
-                        <td>
-                            {{-- LOGIKA WARNA STATUS --}}
-                            @php
-                                $statusColor = 'warning'; // Default kuning
-                                if($sp2a->current_step == 'finished') $statusColor = 'success';
-                                if($sp2a->current_step == 'staff') $statusColor = 'danger';
-                                if(str_contains($sp2a->status, 'Disetujui')) $statusColor = 'info';
-                            @endphp
-                            <span class="badge bg-{{ $statusColor }} rounded-pill">
-                                {{ $sp2a->status }}
-                            </span>
-                        </td>
-
-                        <td class="text-center py-2">
-                            <div class="d-flex flex-column gap-2 px-2">
-                                {{-- 1. TOMBOL DETAIL (ATAS) --}}
-                                <a href="{{ route('sp2a.show', $sp2a->id) }}" class="btn btn-sm btn-outline-primary fw-bold rounded-3">
-                                    Detail
-                                </a>
-
-                                {{-- 2. TOMBOL APPROVE (BAWAH) - HANYA JIKA GILIRANNYA --}}
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                {{-- Tambahkan style min-height agar dropdown tidak terpotong jika data sedikit --}}
+                <table class="table table-hover align-middle mb-0" style="min-height: 200px;">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4 py-3">Nomor Surat</th>
+                            <th class="py-3">Kepada</th>
+                            <th class="py-3">Tanggal</th>
+                            <th class="py-3 text-center">Status</th>
+                            <th class="pe-4 py-3 text-end">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($sp2as as $s)
+                        <tr>
+                            <td class="ps-4 fw-bold font-monospace text-primary">
+                                {{ $s->nomor_sp2a ?? 'DRAFT' }}
+                            </td>
+                            <td>
+                                <div class="fw-bold">{{ $s->kepada_nama }}</div>
+                                <div class="small text-muted">Dari: {{ $s->dari_nama }}</div>
+                            </td>
+                            <td>{{ $s->tanggal_surat->format('d/m/Y') }}</td>
+                            <td class="text-center">
                                 @php
-                                    $showApprove = false;
-                                    $r = Auth::user()->role;
-                                    if(($r == 'sm' && $sp2a->current_step == 'sm') || 
-                                       ($r == 'smqa' && $sp2a->current_step == 'smqa') || 
-                                       ($r == 'gm' && $sp2a->current_step == 'gm')) {
-                                        $showApprove = true;
-                                    }
+                                    $badge = 'bg-secondary';
+                                    if($s->current_step == 'staff') $badge = 'bg-secondary'; // Draft
+                                    elseif(str_contains($s->status, 'Menunggu')) $badge = 'bg-warning text-dark';
+                                    elseif(str_contains($s->status, 'Perbaikan')) $badge = 'bg-danger';
+                                    elseif($s->current_step == 'finished') $badge = 'bg-success';
+                                    elseif(str_contains($s->status, 'Disetujui')) $badge = 'bg-info text-dark';
                                 @endphp
-
-                                @if($showApprove)
-                                    <button type="button" class="btn btn-sm btn-success fw-bold shadow-sm rounded-3" onclick="confirmApprove('{{ $sp2a->id }}')">
-                                        <i class="bi bi-check-lg me-1"></i> Approve
+                                <span class="badge {{ $badge }} rounded-pill px-3 py-2">
+                                    {{ $s->status }}
+                                </span>
+                            </td>
+                            <td class="pe-4 text-end">
+                                {{-- DROPDOWN MENU START --}}
+                                <div class="dropdown">
+                                    <button class="btn btn-light btn-sm shadow-sm border dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-three-dots-vertical"></i> Pilihan
                                     </button>
-                                    <form id="approve-form-{{ $sp2a->id }}" action="{{ route('sp2a.approve', $sp2a->id) }}" method="POST" style="display: none;">
-                                        @csrf
-                                    </form>
-                                @endif
-                                
-                                {{-- 3. TOMBOL REVISI (STAFF) --}}
-                                @if($sp2a->current_step == 'staff' && Auth::user()->role == 'staff')
-                                    <a href="{{ route('sp2a.edit', $sp2a->id) }}" class="btn btn-sm btn-warning rounded-3">Revisi</a>
-                                @endif
-                            </div>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr><td colspan="4" class="text-center py-5 text-muted">Data kosong.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
+                                        
+                                        {{-- 1. MENU LIHAT DETAIL --}}
+                                        <li>
+                                            <a class="dropdown-item py-2" href="{{ route('sp2a.show', $s->id) }}">
+                                                <i class="bi bi-eye text-primary me-2"></i> Lihat Detail
+                                            </a>
+                                        </li>
+
+                                        {{-- 2. MENU STAFF (Edit, Proses, Hapus) --}}
+                                        @if($s->current_step == 'staff' && Auth::user()->role == 'staff')
+                                            <li><hr class="dropdown-divider"></li>
+                                            
+                                            {{-- Edit --}}
+                                            <li>
+                                                <a class="dropdown-item py-2" href="{{ route('sp2a.edit', $s->id) }}">
+                                                    <i class="bi bi-pencil text-warning me-2"></i> Edit
+                                                </a>
+                                            </li>
+
+                                            {{-- Proses (Trigger JS) --}}
+                                            <li>
+                                                <button type="button" class="dropdown-item py-2 fw-bold text-success" onclick="confirmProcess('{{ $s->id }}')">
+                                                    <i class="bi bi-send-fill me-2"></i> Proses ke SM
+                                                </button>
+                                            </li>
+
+                                            <li><hr class="dropdown-divider"></li>
+
+                                            {{-- Hapus (Trigger JS) --}}
+                                            <li>
+                                                <button type="button" class="dropdown-item py-2 text-danger" onclick="confirmDelete('{{ $s->id }}')">
+                                                    <i class="bi bi-trash me-2"></i> Hapus
+                                                </button>
+                                            </li>
+                                        @endif
+
+                                        {{-- 3. MENU APPROVER --}}
+                                        @php
+                                            $showApprove = false;
+                                            $r = Auth::user()->role;
+                                            if(($r == 'sm' && $s->current_step == 'sm') || 
+                                               ($r == 'smqa' && $s->current_step == 'smqa') || 
+                                               ($r == 'gm' && $s->current_step == 'gm')) {
+                                                $showApprove = true;
+                                            }
+                                        @endphp
+
+                                        @if($showApprove)
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <button type="button" class="dropdown-item py-2 fw-bold text-success" onclick="confirmApprove('{{ $s->id }}')">
+                                                    <i class="bi bi-check-circle-fill me-2"></i> Approve
+                                                </button>
+                                            </li>
+                                        @endif
+                                    </ul>
+                                </div>
+                                {{-- DROPDOWN END --}}
+
+                                {{-- HIDDEN FORMS (Diperlukan untuk JS SweetAlert) --}}
+                                {{-- Form Proses --}}
+                                <form id="process-form-{{ $s->id }}" action="{{ route('sp2a.process', $s->id) }}" method="POST" style="display: none;">
+                                    @csrf
+                                </form>
+
+                                {{-- Form Hapus --}}
+                                <form id="delete-form-{{ $s->id }}" action="{{ route('sp2a.destroy', $s->id) }}" method="POST" style="display: none;">
+                                    @csrf
+                                    @method('DELETE')
+                                </form>
+
+                                {{-- Form Approve --}}
+                                <form id="approve-form-{{ $s->id }}" action="{{ route('sp2a.approve', $s->id) }}" method="POST" style="display: none;">
+                                    @csrf
+                                </form>
+
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-1 d-block mb-2"></i> Belum ada data SP2A
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
 
-{{-- SWEETALERT 2 SCRIPT --}}
+{{-- SCRIPT SWEETALERT (TETAP SAMA) --}}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+    function confirmProcess(id) {
+        Swal.fire({
+            title: 'Kirim Dokumen?',
+            text: "Dokumen Draft ini akan dikirim ke Senior Manager (SM) untuk diperiksa.",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#198754',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, Kirim!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({title: 'Mengirim...', didOpen: () => Swal.showLoading()});
+                document.getElementById('process-form-' + id).submit();
+            }
+        });
+    }
+
+    function confirmDelete(id) {
+        Swal.fire({
+            title: 'Hapus Dokumen?',
+            text: "Data yang dihapus tidak dapat dikembalikan!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('delete-form-' + id).submit();
+            }
+        });
+    }
+
     function confirmApprove(id) {
         Swal.fire({
             title: 'Setujui Dokumen?',
             text: "Dokumen akan diteruskan ke tahap selanjutnya.",
             icon: 'question',
             showCancelButton: true,
-            confirmButtonColor: '#198754', // Hijau Bootstrap
-            cancelButtonColor: '#6c757d',
+            confirmButtonColor: '#198754',
             confirmButtonText: 'Ya, Setujui',
-            cancelButtonText: 'Batal',
-            reverseButtons: true
+            cancelButtonText: 'Batal'
         }).then((result) => {
             if (result.isConfirmed) {
                 document.getElementById('approve-form-' + id).submit();
             }
-        })
+        });
     }
 
-    // Menampilkan Flash Message dari Controller dengan SweetAlert
+    // Flash Message
     @if(session('success'))
         Swal.fire({ icon: 'success', title: 'Berhasil!', text: "{{ session('success') }}", timer: 2000, showConfirmButton: false });
     @endif

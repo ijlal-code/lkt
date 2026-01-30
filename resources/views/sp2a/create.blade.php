@@ -103,7 +103,7 @@
                 <div class="d-flex justify-content-end gap-2 mt-5 pt-3 border-top">
                     <a href="{{ route('sp2a.index') }}" class="btn btn-secondary px-4">Batal</a>
                     <button type="submit" class="btn btn-primary px-5 fw-bold">
-                        <i class="bi bi-send me-2"></i> Kirim ke SM (Approval)
+                        <i class="bi bi-send me-2"></i> Simpan
                     </button>
                 </div>
             </form>

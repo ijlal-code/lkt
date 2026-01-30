@@ -63,6 +63,8 @@ Route::middleware(['auth'])->group(function () {
     // --- MANAJEMEN SP2A (WORKFLOW BARU) ---
     // 1. Resource standar (index, create, store, edit, update, destroy, show)
     Route::resource('sp2a', Sp2aController::class);
+    // Di dalam group middleware auth, atau di bawah route resource sp2a
+Route::post('/sp2a/{id}/process', [App\Http\Controllers\Sp2aController::class, 'process'])->name('sp2a.process');
 
     // 2. Route Tambahan untuk Workflow Approval & Koreksi
     // Route untuk melihat detail (bisa pakai default show, tapi kita definisikan eksplisit jika butuh custom URL)

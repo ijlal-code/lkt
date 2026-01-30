@@ -5,13 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Sp2a;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Barryvdh\DomPDF\Facade\Pdf; // Pastikan library barryvdh/laravel-dompdf sudah terinstall
+use Barryvdh\DomPDF\Facade\Pdf; 
 
 class Sp2aController extends Controller
 {
     /**
-     * Menampilkan daftar semua SP2A.
-     * Mengambil semua data agar history tetap terlihat di halaman Index.
+     * Menampilkan daftar semua SP2A
      */
     public function index()
     {
@@ -20,32 +19,23 @@ class Sp2aController extends Controller
     }
 
     /**
-     * Halaman Riwayat Approval Khusus (Filtered)
-     * Untuk menu "Riwayat Approval" di sidebar.
+     * Halaman Riwayat Approval (History)
      */
     public function history()
     {
         $role = Auth::user()->role;
         $query = Sp2a::query();
 
-        // LOGIKA RIWAYAT:
-        // Tampilkan dokumen jika user tersebut PERNAH memberikan stempel waktu approval.
-        
         if ($role == 'sm') {
-            // SM melihat semua yang pernah dia setujui (termasuk yang sudah final di GM)
             $query->whereNotNull('approved_sm_at');
         } 
         elseif ($role == 'smqa') {
-            // SM QA melihat semua yang pernah dia setujui
             $query->whereNotNull('approved_smqa_at');
         } 
         elseif ($role == 'gm') {
-            // GM melihat semua yang pernah dia setujui
             $query->whereNotNull('approved_gm_at');
         } 
         else {
-            // Role lain (Staff/Auditor/dll) biasanya tidak pakai menu ini (kosongkan)
-            // Atau bisa dialihkan melihat semua yang Approved By System
             $query->where('status', 'Approved By System');
         }
 
@@ -59,7 +49,7 @@ class Sp2aController extends Controller
     }
 
     /**
-     * Simpan SP2A Baru
+     * Simpan SP2A Baru -> STATUS 'staff' TAPI LABEL 'Draft'
      */
     public function store(Request $request)
     {
@@ -83,18 +73,36 @@ class Sp2aController extends Controller
             'dasar_surat'   => $request->dasar_surat,
             'isi_surat'     => $request->isi_surat,
             'penanda_tangan_nama' => $request->penanda_tangan_nama,
-            
-            // Simpan Array Tembusan (bersihkan input kosong)
             'tembusan' => array_values(array_filter($request->tembusan ?? [])),
 
-            // WORKFLOW START
+            // PERBAIKAN: Gunakan 'staff' karena 'draft' tidak ada di ENUM database
             'nomor_sp2a' => null,
-            'current_step' => 'sm', 
-            'status' => 'Menunggu Approval SM', 
+            'current_step' => 'staff', 
+            'status' => 'Draft (Belum Dikirim)', 
             'catatan_koreksi' => null,
         ]);
 
-        return redirect()->route('sp2a.index')->with('success', 'Draft SP2A berhasil dibuat. Menunggu Approval SM.');
+        return redirect()->route('sp2a.index')->with('success', 'Draft SP2A berhasil disimpan. Silakan klik tombol "Proses" untuk mengirim ke SM.');
+    }
+
+    /**
+     * Method untuk Memproses (Kirim) Draft/Revisi ke SM
+     */
+    public function process($id)
+    {
+        $sp2a = Sp2a::findOrFail($id);
+
+        // Hanya bisa diproses jika posisi dokumen ada di 'staff'
+        if ($sp2a->current_step == 'staff') {
+            $sp2a->update([
+                'current_step' => 'sm',
+                'status' => 'Menunggu Approval SM',
+                'catatan_koreksi' => null // Hapus catatan koreksi lama jika ada
+            ]);
+            return back()->with('success', 'Dokumen berhasil dikirim ke Senior Manager (SM).');
+        }
+
+        return back()->with('error', 'Dokumen tidak dapat diproses (Status bukan Draft/Staff).');
     }
 
     public function show($id)
@@ -103,11 +111,16 @@ class Sp2aController extends Controller
         return view('sp2a.show', compact('sp2a'));
     }
 
+    /**
+     * Edit Dokumen
+     */
     public function edit($id)
     {
         $sp2a = Sp2a::findOrFail($id);
+        
+        // Cek 'staff' (mencakup draft baru & revisi)
         if ($sp2a->current_step != 'staff') {
-            return back()->with('error', 'Dokumen sedang diproses, tidak bisa diedit.');
+            return back()->with('error', 'Dokumen sedang diproses di tahap approval, tidak bisa diedit.');
         }
         return view('sp2a.edit', compact('sp2a'));
     }
@@ -127,6 +140,10 @@ class Sp2aController extends Controller
             'tembusan' => 'nullable|array',
         ]);
 
+        // LOGIKA UPDATE:
+        // Tetap di 'staff' agar user bisa review dulu, baru klik "Proses" manual.
+        // Ini berlaku baik untuk Draft baru maupun Revisi.
+        
         $sp2a->update([
             'tanggal_surat' => $request->tanggal_surat,
             'kepada_nama' => $request->kepada_nama,
@@ -138,20 +155,20 @@ class Sp2aController extends Controller
             'penanda_tangan_nama' => $request->penanda_tangan_nama,
             'tembusan' => array_values(array_filter($request->tembusan ?? [])),
 
-            // RESET WORKFLOW KE SM
-            'current_step' => 'sm', 
-            'status' => 'Revisi Terkirim (Menunggu Approval SM)',
-            'catatan_koreksi' => null,
+            'current_step' => 'staff', // Tetap di Staff
+            'status' => 'Draft (Telah Diupdate)', // Update status info
+            
+            // Reset approval history jika ada perubahan konten
             'approved_sm_at' => null,
             'approved_smqa_at' => null,
             'approved_gm_at' => null,
         ]);
 
-        return redirect()->route('sp2a.show', $id)->with('success', 'Revisi berhasil dikirim kembali ke SM.');
+        return redirect()->route('sp2a.index')->with('success', 'Draft berhasil diperbarui. Klik tombol "Proses" di menu aksi untuk mengirim.');
     }
 
     /**
-     * Logic Approval dengan STATUS REALTIME DESKRIPTIF
+     * Logic Approval Berjenjang (SM -> SMQA -> GM)
      */
     public function approve($id)
     {
@@ -162,7 +179,7 @@ class Sp2aController extends Controller
         if ($sp2a->current_step == 'sm' && $userRole == 'sm') {
             $sp2a->update([
                 'current_step' => 'smqa',
-                'status' => 'Disetujui SM (Menunggu SM QA)', // Status Realtime
+                'status' => 'Disetujui SM (Menunggu SM QA)',
                 'approved_sm_at' => now(),
             ]);
             return back()->with('success', 'Dokumen disetujui. Status kini: Menunggu SM QA.');
@@ -172,7 +189,7 @@ class Sp2aController extends Controller
         if ($sp2a->current_step == 'smqa' && $userRole == 'smqa') {
             $sp2a->update([
                 'current_step' => 'gm',
-                'status' => 'Disetujui SM QA (Menunggu GM)', // Status Realtime
+                'status' => 'Disetujui SM QA (Menunggu GM)',
                 'approved_smqa_at' => now(),
             ]);
             return back()->with('success', 'Dokumen disetujui. Status kini: Menunggu GM Internal Audit.');
@@ -181,7 +198,6 @@ class Sp2aController extends Controller
         // 3. GM Approve -> Final (Generate Nomor)
         if ($sp2a->current_step == 'gm' && $userRole == 'gm') {
             
-            // Generate Nomor Surat: SP2A/001/INTERNAL/I/2026
             $romawi = $this->getRomawi($sp2a->tanggal_surat->format('n'));
             $tahun = $sp2a->tanggal_surat->format('Y');
             $noUrut = str_pad($sp2a->id, 3, '0', STR_PAD_LEFT);
@@ -189,7 +205,7 @@ class Sp2aController extends Controller
 
             $sp2a->update([
                 'current_step' => 'finished',
-                'status' => 'Selesai (Approved by System)', // Status Final
+                'status' => 'Approved By System',
                 'approved_gm_at' => now(),
                 'nomor_sp2a' => $nomorSurat, 
             ]);
@@ -223,25 +239,23 @@ class Sp2aController extends Controller
     public function downloadPdf($id)
     {
         $sp2a = Sp2a::findOrFail($id);
-        
-        // Load view khusus PDF (buat file resources/views/sp2a/pdf.blade.php yang isinya mirip show.blade.php tapi clean)
         $pdf = Pdf::loadView('sp2a.pdf', compact('sp2a'));
-        
-        // Setting kertas A4
         $pdf->setPaper('A4', 'portrait');
-        
-        // Nama file saat didownload
         $fileName = 'SP2A_' . ($sp2a->nomor_sp2a ? str_replace('/', '-', $sp2a->nomor_sp2a) : 'DRAFT') . '.pdf';
-        
         return $pdf->download($fileName);
     }
 
+    /**
+     * Hapus Dokumen
+     */
     public function destroy($id)
     {
         $sp2a = Sp2a::findOrFail($id);
+        
         if ($sp2a->current_step == 'finished') {
             return back()->with('error', 'Tidak bisa menghapus dokumen yang sudah disetujui sistem (Final).');
         }
+        
         $sp2a->delete();
         return back()->with('success', 'Dokumen SP2A berhasil dihapus.');
     }

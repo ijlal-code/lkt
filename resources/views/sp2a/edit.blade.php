@@ -121,7 +121,7 @@
                 <div class="mt-4 text-end border-top pt-3">
                     <a href="{{ route('sp2a.index') }}" class="btn btn-secondary me-2">Batal</a>
                     <button type="submit" class="btn btn-warning px-5 py-2 shadow-sm fw-bold">
-                        <i class="bi bi-send-check me-2"></i>KIRIM REVISI KE SM
+                        <i class="bi bi-send-check me-2"></i>Simpan Revisi
                     </button>
                 </div>
             </form>
