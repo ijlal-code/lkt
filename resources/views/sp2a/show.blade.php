@@ -11,14 +11,16 @@
                 Status: {{ $sp2a->status }}
             </span>
         </div>
-     <a href="{{ url()->previous() }}" class="btn btn-outline-secondary me-2">
-    <i class="bi bi-arrow-left"></i> Kembali
-</a>
+        <div>
+            <a href="{{ url()->previous() }}" class="btn btn-outline-secondary me-2">
+                <i class="bi bi-arrow-left"></i> Kembali
+            </a>
             
             {{-- TOMBOL DOWNLOAD PDF --}}
             <a href="{{ route('sp2a.download', $sp2a->id) }}" class="btn btn-danger shadow-sm">
                 <i class="bi bi-file-earmark-pdf-fill me-2"></i>Download PDF
             </a>
+        </div>
     </div>
 
     {{-- ALERT KOREKSI --}}
@@ -35,7 +37,7 @@
     <div class="card shadow-lg border-0 mb-5">
         <div class="card-body p-5" style="min-height: 800px; font-family: 'Times New Roman', serif; position: relative;">
             
-            {{-- KOP SURAT --}}
+            {{-- 1. KOP SURAT --}}
             <table class="w-100 mb-4 border-bottom border-3 border-dark pb-2">
                 <tr>
                     <td width="15%"><img src="{{ asset('img/logo-tonasa.png') }}" width="80"></td>
@@ -47,7 +49,7 @@
                 </tr>
             </table>
 
-            {{-- JUDUL & NOMOR --}}
+            {{-- 2. JUDUL & NOMOR --}}
             <div class="text-center mb-4">
                 <h5 class="fw-bold text-decoration-underline">SURAT PERINGATAN 2A</h5>
                 @if($sp2a->current_step == 'finished')
@@ -57,7 +59,7 @@
                 @endif
             </div>
 
-            {{-- META SURAT --}}
+            {{-- 3. META SURAT --}}
             <div class="row mb-3">
                 <div class="col-2">Kepada</div>
                 <div class="col-10">: <strong>{{ $sp2a->kepada_nama }}</strong></div>
@@ -71,47 +73,59 @@
                 <div class="col-10">: {{ $sp2a->perihal }}</div>
             </div>
 
-            {{-- ISI SURAT --}}
-            <div class="content-surat text-justify mb-5">
+            {{-- 4. ISI SURAT --}}
+            <div class="content-surat text-justify mb-5" style="min-height: 150px;">
                 {!! $sp2a->isi_surat !!}
             </div>
 
-            {{-- TANDA TANGAN (BAGIAN YANG DIUBAH) --}}
+            {{-- 5. TANDA TANGAN (POSISI KIRI) --}}
             <div class="row mt-5">
-                <div class="col-6 offset-6 text-center">
-                    <p class="mb-4">Pangkep, {{ $sp2a->tanggal_surat->format('d F Y') }}<br>Hormat Kami,</p>
+                <div class="col-md-6 text-start">
+                    {{-- Tanggal Otomatis --}}
+                    <p class="mb-0">
+                        Pangkep, {{ \Carbon\Carbon::parse($sp2a->tanggal_surat)->translatedFormat('d F Y') }}
+                    </p>
+                    <p class="mt-2">Hormat Kami,</p>
                     
-                    {{-- Area Tanda Tangan: Tinggi fix agar layout tidak lompat --}}
-                    <div style="height: 80px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center;">
+                    {{-- Area Status Tanda Tangan --}}
+                    <div style="margin: 20px 0;">
                         @if($sp2a->current_step == 'finished')
-                            {{-- TAMPILAN BARU: TEKS HITAM TANPA KOTAK --}}
-                            <div class="text-center">
-                                <span class="fw-bold text-uppercase text-dark d-block">APPROVED BY SYSTEM</span>
-                            
+                            {{-- TEKS POLOS TANPA BORDER --}}
+                            <div class="fw-bold text-uppercase">
+                                APPROVED BY SYSTEM
                             </div>
                         @else
-                            {{-- Placeholder jika belum approve --}}
-                            <span class="text-muted fst-italic small">[Menunggu Tanda Tangan GM]</span>
+                            <span class="text-muted fst-italic small border p-2 bg-light">
+                                [Menunggu Approval GM]
+                            </span>
                         @endif
                     </div>
 
-                    {{-- NAMA GM (Persis di bawah APPROVED BY SYSTEM) --}}
-                    <p class="fw-bold mt-1 text-decoration-underline">{{ $sp2a->penanda_tangan_nama }}</p>
+                    {{-- Nama GM --}}
+                    <p class="fw-bold mt-1 text-decoration-underline mb-0">{{ $sp2a->penanda_tangan_nama }}</p>
                     <p class="mt-0">GM Internal Audit</p>
                 </div>
             </div>
 
-             {{-- TEMBUSAN --}}
-             @if(!empty($sp2a->tembusan) && count($sp2a->tembusan) > 0)
-             <div class="mt-5 text-start">
-                 <p class="mb-1 fw-bold text-decoration-underline">Tembusan:</p>
-                 <ol class="ps-3 mb-0">
-                     @foreach($sp2a->tembusan as $cc)
-                         <li>{{ $cc }}</li>
-                     @endforeach
-                 </ol>
-             </div>
-             @endif
+            {{-- 6. CC (TEMBUSAN) --}}
+            @if(!empty($sp2a->tembusan) && count($sp2a->tembusan) > 0)
+            <div class="mt-5 text-start">
+                <p class="mb-1 fw-bold text-decoration-underline">Cc:</p>
+                <ol class="ps-3 mb-0">
+                    @foreach($sp2a->tembusan as $cc)
+                        <li>{{ $cc }}</li>
+                    @endforeach
+                </ol>
+            </div>
+            @endif
+
+            {{-- 7. FOOTER NOTE (CATATAN KAKI OTOMATIS) --}}
+            <div class="mt-5 pt-3 border-top text-muted small fst-italic">
+                Dokumen ini telah ditandatangani secara elektronik.<br>
+                ID Dokumen: {{ $sp2a->nomor_sp2a ?? 'DRAFT-'.$sp2a->id }} | 
+                Dicetak: {{ now()->translatedFormat('d F Y H:i') }}
+            </div>
+
         </div>
     </div>
 
@@ -124,7 +138,7 @@
     @endphp
 
     @if($canApprove)
-    <div class="card fixed-bottom shadow-lg border-top border-primary">
+    <div class="card fixed-bottom shadow-lg border-top border-primary" style="z-index: 1030;">
         <div class="card-body container d-flex justify-content-between align-items-center py-3">
             <div>
                 <h6 class="mb-0 fw-bold text-primary">Aksi Diperlukan:</h6>

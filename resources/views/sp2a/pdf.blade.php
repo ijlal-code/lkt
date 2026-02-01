@@ -1,149 +1,224 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-    <meta charset="utf-8">
-    <title>SP2A - {{ $sp2a->nomor_sp2a ?? 'Draft' }}</title>
+    <meta charset="UTF-8">
+    <title>SP2A - {{ $sp2a->nomor_sp2a ?? 'DRAFT' }}</title>
     <style>
+        /* SETUP HALAMAN */
+        @page {
+            margin: 1cm 2cm; /* Atur margin kertas saat diprint */
+        }
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Times New Roman', serif;
             font-size: 12pt;
             line-height: 1.5;
             color: #000;
-            margin: 0;
-            padding: 0;
         }
-        .header-table {
+        
+        /* CONTAINER */
+        .container {
+            width: 100%;
+        }
+
+        /* --- KOP SURAT --- */
+        table.kop-surat {
             width: 100%;
             border-bottom: 3px solid #000;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
+            padding-bottom: 8px;
+            margin-bottom: 25px;
         }
-        .header-logo {
-            width: 80px;
-        }
-        .header-text {
-            text-align: center;
-        }
-        .header-text h2 {
-            margin: 0;
+        .kop-title {
             font-size: 16pt;
+            font-weight: bold;
             text-transform: uppercase;
+            text-align: center;
+            margin: 0;
         }
-        .content {
-            margin: 20px 0;
+        .kop-subtitle {
+            font-size: 12pt;
+            text-align: center;
+            margin: 0;
         }
-        .info-table {
+
+        /* --- JUDUL & NOMOR --- */
+        .judul-surat {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .judul-main {
+            font-weight: bold;
+            text-decoration: underline;
+            font-size: 14pt;
+            margin: 0;
+        }
+        .nomor-surat {
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        /* --- META INFO --- */
+        table.meta-info {
             width: 100%;
             margin-bottom: 20px;
         }
-        .info-table td {
+        table.meta-info td {
             vertical-align: top;
             padding: 2px 0;
         }
+        .label { width: 100px; } /* Lebar label 'Kepada', 'Dari' */
+        .separator { width: 20px; text-align: center; }
+
+        /* --- ISI SURAT --- */
         .isi-surat {
             text-align: justify;
-            min-height: 300px;
+            margin-bottom: 40px;
+            min-height: 150px;
         }
-        .footer-table {
-            width: 100%;
-            margin-top: 50px;
+
+        /* --- TANDA TANGAN (POSISI KIRI) --- */
+        .signature-wrapper {
+            margin-top: 30px;
+            text-align: left; /* Pastikan rata kiri */
+            width: 50%; /* Mengambil setengah halaman sebelah kiri */
         }
-        .ttd-container {
-            width: 250px;
-            text-align: center;
-        }
-        /* Style khusus untuk tanda tangan otomatis */
-        .approved-text {
-            font-family: 'Courier', monospace;
-            font-size: 11pt;
+        
+        .status-box {
+            margin: 15px 0;
             font-weight: bold;
-            color: #000;
-            margin-bottom: -3px; /* Merapatkan ke garis nama */
             text-transform: uppercase;
         }
-        .timestamp {
-            font-size: 8pt;
-            font-weight: normal;
+
+        /* --- CC & FOOTER BAWAH --- */
+        .cc-section {
+            margin-top: 40px;
+            font-size: 11pt;
         }
+        .cc-label {
+            font-weight: bold;
+            text-decoration: underline;
+            margin-bottom: 5px;
+        }
+        .cc-list {
+            margin-top: 0;
+            padding-left: 20px;
+        }
+        
+        /* TEXT OTOMATIS DI BAWAH CC */
+        .footer-note {
+            margin-top: 20px;
+            font-size: 9pt;
+            color: #555;
+            font-style: italic;
+            border-top: 1px solid #ccc;
+            padding-top: 5px;
+            width: 100%;
+        }
+
+        /* Utilities */
+        .fw-bold { font-weight: bold; }
+        .text-underline { text-decoration: underline; }
+        .text-danger { color: red; font-style: italic; }
     </style>
 </head>
 <body>
 
-    <table class="header-table">
-        <tr>
-            <td class="header-logo">
-                <img src="{{ public_path('img/logo-tonasa.png') }}" width="70">
-            </td>
-            <td class="header-text">
-                <h2>Internal Audit Department</h2>
-                <p style="margin: 0; font-size: 10pt;">PT Semen Tonasa - Pangkep, Sulawesi Selatan</p>
-            </td>
-            <td class="header-logo" style="text-align: right;">
-                <img src="{{ public_path('img/logo-internal-audit.png') }}" width="70">
-            </td>
-        </tr>
-    </table>
-
-    <div class="content">
-        <center>
-            <h3 style="text-decoration: underline; margin-bottom: 5px;">SURAT PERINGATAN 2A (SP2A)</h3>
-            <p style="margin-top: 0;">
-                Nomor: {{ $sp2a->status == 'Approved By System' ? $sp2a->nomor_sp2a : '..........................................' }}
-            </p>
-        </center>
-
-        <table class="info-table">
+    <div class="container">
+        
+        {{-- 1. KOP SURAT --}}
+        <table class="kop-surat">
             <tr>
-                <td width="15%">Tanggal</td>
-                <td width="2%">:</td>
-                <td>{{ \Carbon\Carbon::parse($sp2a->tanggal_surat)->format('d F Y') }}</td>
+                <td width="15%">
+                    {{-- Gunakan public_path agar terbaca oleh DomPDF --}}
+                    <img src="{{ public_path('img/logo-tonasa.png') }}" width="70" alt="Logo Tonasa">
+                </td>
+                <td>
+                    <h2 class="kop-title">PT Semen Tonasa</h2>
+                    <p class="kop-subtitle">Unit Internal Audit</p>
+                </td>
+                <td width="15%" style="text-align: right;">
+                    <img src="{{ public_path('img/logo-internal-audit.png') }}" width="70" alt="Logo IA">
+                </td>
             </tr>
+        </table>
+
+        {{-- 2. JUDUL & NOMOR --}}
+        <div class="judul-surat">
+            <h3 class="judul-main">SURAT PERINGATAN 2A</h3>
+            
+            @if($sp2a->current_step == 'finished')
+                <p class="nomor-surat">No: {{ $sp2a->nomor_sp2a }}</p>
+            @else
+                <p class="nomor-surat text-danger">[Nomor Belum Terbit - DRAFT]</p>
+            @endif
+        </div>
+
+        {{-- 3. META INFO --}}
+        <table class="meta-info">
             <tr>
-                <td>Kepada</td>
-                <td>:</td>
+                <td class="label">Kepada</td>
+                <td class="separator">:</td>
                 <td><strong>{{ $sp2a->kepada_nama }}</strong></td>
             </tr>
             <tr>
-                <td>Perihal</td>
-                <td>:</td>
+                <td class="label">Dari</td>
+                <td class="separator">:</td>
+                <td>{{ $sp2a->dari_nama }}</td>
+            </tr>
+            <tr>
+                <td class="label">Perihal</td>
+                <td class="separator">:</td>
                 <td>{{ $sp2a->perihal }}</td>
             </tr>
         </table>
 
+        {{-- 4. ISI SURAT --}}
         <div class="isi-surat">
             {!! $sp2a->isi_surat !!}
         </div>
 
-        <table width="100%" style="margin-top: 40px;">
-            <tr>
-                <td width="60%"></td>
-                <td width="40%" align="center">
-                    <p style="margin-bottom: 0;">Hormat Kami,</p>
-                    
-                    <div style="height: 50px; position: relative;">
-                        @if($sp2a->status == 'Approved By System')
-                            <div style="margin-top: 30px;">
-                                <div class="approved-text">APPROVED BY SYSTEM</div>
-                            </div>
-                        @else
-                            <div style="height: 50px;"></div>
-                        @endif
-                    </div>
+        {{-- 5. TANDA TANGAN (SEBELAH KIRI) --}}
+        <div class="signature-wrapper">
+            {{-- Tanggal Otomatis (Format Indonesia) --}}
+            <p style="margin-bottom: 0;">
+                Pangkep, {{ \Carbon\Carbon::parse($sp2a->tanggal_surat)->translatedFormat('d F Y') }}
+            </p>
+            <p style="margin-top: 5px;">Hormat Kami,</p>
 
-                    <p style="margin-top: 0; margin-bottom: 0;">
-                        <strong><u>{{ $sp2a->penanda_tangan_nama }}</u></strong>
-                    </p>
-                    <p style="margin-top: 0; font-size: 10pt;">Kepala Departemen Audit</p>
-                </td>
-            </tr>
-        </table>
-    </div>
+            {{-- Status Approved --}}
+            <div class="status-box">
+                @if($sp2a->current_step == 'finished')
+                    APPROVED BY SYSTEM
+                @else
+                    <span style="color: #aaa; font-style: italic; font-weight: normal; font-size: 10pt;">
+                        [Menunggu Approval GM]
+                    </span>
+                @endif
+            </div>
 
-    <div style="position: fixed; bottom: 0; width: 100%; font-size: 8pt; color: #666; border-top: 1px solid #ddd; padding-top: 5px;">
-        Dokumen ini diterbitkan secara sistem melalui Sistem Audit Internal PT Semen Tonasa.
-        @if($sp2a->status == 'Approved By System')
-             Diverifikasi pada: {{ \Carbon\Carbon::parse($sp2a->approved_at)->format('d/m/Y H:i') }}
+            {{-- Nama GM --}}
+            <p class="fw-bold text-underline" style="margin-bottom: 0;">{{ $sp2a->penanda_tangan_nama }}</p>
+            <p style="margin-top: 2px;">GM Internal Audit</p>
+        </div>
+
+        {{-- 6. CC (TEMBUSAN) --}}
+        @if(!empty($sp2a->tembusan) && count($sp2a->tembusan) > 0)
+        <div class="cc-section">
+            <div class="cc-label">Cc:</div>
+            <ol class="cc-list">
+                @foreach($sp2a->tembusan as $cc)
+                    <li>{{ $cc }}</li>
+                @endforeach
+            </ol>
+        </div>
         @endif
+
+        {{-- 7. FOOTER TEKS OTOMATIS (Di Bawah CC) --}}
+        <div class="footer-note">
+            {{-- Contoh teks otomatis, silakan sesuaikan dengan teks di foto Anda --}}
+            Dokumen ini telah ditandatangani secara elektronik. <br>
+            ID Dokumen: {{ $sp2a->nomor_sp2a ?? 'DRAFT-'.$sp2a->id }} | Dicetak: {{ now()->translatedFormat('d F Y H:i') }}
+        </div>
+
     </div>
 
 </body>

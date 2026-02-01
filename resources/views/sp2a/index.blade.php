@@ -60,14 +60,14 @@
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
                                         
-                                        {{-- 1. MENU LIHAT DETAIL --}}
+                                        {{-- 1. MENU LIHAT DETAIL (Semua User) --}}
                                         <li>
                                             <a class="dropdown-item py-2" href="{{ route('sp2a.show', $s->id) }}">
                                                 <i class="bi bi-eye text-primary me-2"></i> Lihat Detail
                                             </a>
                                         </li>
 
-                                        {{-- 2. MENU STAFF (Edit, Proses, Hapus) --}}
+                                        {{-- 2. MENU STAFF (Edit & Proses - Khusus Draft/Revisi) --}}
                                         @if($s->current_step == 'staff' && Auth::user()->role == 'staff')
                                             <li><hr class="dropdown-divider"></li>
                                             
@@ -84,18 +84,9 @@
                                                     <i class="bi bi-send-fill me-2"></i> Proses ke SM
                                                 </button>
                                             </li>
-
-                                            <li><hr class="dropdown-divider"></li>
-
-                                            {{-- Hapus (Trigger JS) --}}
-                                            <li>
-                                                <button type="button" class="dropdown-item py-2 text-danger" onclick="confirmDelete('{{ $s->id }}')">
-                                                    <i class="bi bi-trash me-2"></i> Hapus
-                                                </button>
-                                            </li>
                                         @endif
 
-                                        {{-- 3. MENU APPROVER --}}
+                                        {{-- 3. MENU APPROVER (Approve) --}}
                                         @php
                                             $showApprove = false;
                                             $r = Auth::user()->role;
@@ -114,11 +105,23 @@
                                                 </button>
                                             </li>
                                         @endif
+
+                                        {{-- 4. MENU HAPUS (Admin & Staff) --}}
+                                        @if(in_array(Auth::user()->role, ['admin', 'staff']))
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <button type="button" class="dropdown-item py-2 text-danger" onclick="confirmDelete('{{ $s->id }}')">
+                                                    <i class="bi bi-trash me-2"></i> Hapus
+                                                </button>
+                                            </li>
+                                        @endif
+
                                     </ul>
                                 </div>
                                 {{-- DROPDOWN END --}}
 
                                 {{-- HIDDEN FORMS (Diperlukan untuk JS SweetAlert) --}}
+                                
                                 {{-- Form Proses --}}
                                 <form id="process-form-{{ $s->id }}" action="{{ route('sp2a.process', $s->id) }}" method="POST" style="display: none;">
                                     @csrf
@@ -151,7 +154,7 @@
     </div>
 </div>
 
-{{-- SCRIPT SWEETALERT (TETAP SAMA) --}}
+{{-- SCRIPT SWEETALERT --}}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     function confirmProcess(id) {
@@ -205,7 +208,7 @@
         });
     }
 
-    // Flash Message
+    // Flash Message Handler
     @if(session('success'))
         Swal.fire({ icon: 'success', title: 'Berhasil!', text: "{{ session('success') }}", timer: 2000, showConfirmButton: false });
     @endif

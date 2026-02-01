@@ -40,24 +40,13 @@
                         </thead>
                         <tbody>
                             @foreach($pesan as $p)
-                                {{-- 
-                                    LOGIKA FILTER KHUSUS:
-                                    Hanya peran 'auditor', 'k3', dan 'auditi' yang dibatasi.
-                                    Mereka HANYA boleh melihat dokumen yang statusnya 'Approved By System'.
-                                --}}
                                 @php
                                     $userRole = Auth::user()->role;
-                                    
-                                    // Daftar peran yang hanya boleh melihat hasil akhir
                                     $restrictedViewers = ['auditor', 'k3', 'auditi'];
-                                    
                                     $isRestrictedUser = in_array($userRole, $restrictedViewers);
                                     $isFinalStatus = ($p->status == 'Approved By System');
 
-                                    // Jika user dibatasi DAN status belum final -> SKIP (Jangan tampilkan)
-                                    if ($isRestrictedUser && !$isFinalStatus) {
-                                        continue; 
-                                    }
+                                    if ($isRestrictedUser && !$isFinalStatus) { continue; }
                                 @endphp
 
                             <tr>
@@ -79,41 +68,28 @@
                                     <div class="text-dark text-nowrap">{{ \Carbon\Carbon::parse($p->tanggal_surat)->format('d/m/Y') }}</div>
                                 </td>
                                 
-                                {{-- KOLOM STATUS --}}
                                 <td class="text-center">
                                     @php
-                                        $statusColor = 'warning';
-                                        $icon = 'bi-hourglass-split';
-                                        
-                                        if($p->status == 'Approved By System') {
-                                            $statusColor = 'success';
-                                            $icon = 'bi-patch-check-fill';
-                                        } elseif(str_contains($p->status, 'Ditolak')) {
-                                            $statusColor = 'danger';
-                                            $icon = 'bi-x-circle-fill';
-                                        } elseif(str_contains($p->status, 'Disetujui')) {
-                                            $statusColor = 'info';
-                                            $icon = 'bi-check-circle';
-                                        }
+                                        $statusColor = 'warning'; $icon = 'bi-hourglass-split';
+                                        if($p->status == 'Approved By System') { $statusColor = 'success'; $icon = 'bi-patch-check-fill'; } 
+                                        elseif(str_contains($p->status, 'Ditolak')) { $statusColor = 'danger'; $icon = 'bi-x-circle-fill'; } 
+                                        elseif(str_contains($p->status, 'Disetujui')) { $statusColor = 'info'; $icon = 'bi-check-circle'; }
                                     @endphp
-
                                     <span class="badge-status-{{ $statusColor }} text-nowrap">
                                         <i class="bi {{ $icon }} me-1"></i> {{ $p->status }}
                                     </span>
                                 </td>
                                 
-                                {{-- KOLOM AKSI --}}
                                 <td class="pe-4">
                                     <div class="d-flex flex-column gap-2 align-items-center">
-                                        {{-- 1. Tombol LIHAT (Semua User Punya) --}}
+                                        {{-- 1. Tombol LIHAT --}}
                                         <a href="{{ route('pesan.preview', $p->id) }}" class="btn btn-action-view w-100 py-1 shadow-sm">
                                             <i class="bi bi-eye me-1"></i> Lihat
                                         </a>
 
-                                        {{-- 2. Logika Tombol Kedua (Approve vs Download) --}}
+                                        {{-- 2. Tombol APPROVE / PDF --}}
                                         @php
                                             $canApprove = false;
-                                            // Cek hak approve (Hanya SM, SMQA, GM)
                                             if(($userRole == 'sm' && $p->current_step == 'sm') || 
                                                ($userRole == 'smqa' && $p->current_step == 'smqa') || 
                                                ($userRole == 'gm' && $p->current_step == 'gm')) {
@@ -122,19 +98,28 @@
                                         @endphp
 
                                         @if($canApprove)
-                                            {{-- Jika Approver: Tampilkan Tombol Approve --}}
                                             <form action="{{ route('pesan.approve', $p->id) }}" method="POST" class="w-100 form-approve-list">
                                                 @csrf
                                                 <button type="button" class="btn btn-success fw-bold w-100 py-1 shadow-sm btn-sm btn-approve-trigger">
                                                     Approve
                                                 </button>
                                             </form>
-
                                         @elseif($isFinalStatus)
-                                            {{-- Jika Dokumen Final (User siapapun): Tampilkan Download PDF --}}
-                                            <a href="{{ route('pesan.show', $p->id) }}?download=true" class="btn btn-danger fw-bold w-100 py-1 shadow-sm btn-sm">
+                                            <a href="{{ route('pesan.show', $p->id) }}?download=true" class="btn btn-primary fw-bold w-100 py-1 shadow-sm btn-sm">
                                                 <i class="bi bi-download me-1"></i> PDF
                                             </a>
+                                        @endif
+
+                                        {{-- 3. Tombol HAPUS (BARU) - Khusus Admin & Staff --}}
+                                        @if(in_array(Auth::user()->role, ['admin', 'staff']))
+                                            <button type="button" class="btn btn-danger w-100 py-1 shadow-sm btn-sm" onclick="confirmDeleteMsg('{{ $p->id }}')">
+                                                <i class="bi bi-trash me-1"></i> Hapus
+                                            </button>
+                                            
+                                            <form id="delete-msg-form-{{ $p->id }}" action="{{ route('sp2a.destroy', $p->id) }}" method="POST" style="display: none;">
+                                                @csrf
+                                                @method('DELETE')
+                                            </form>
                                         @endif
                                     </div>
                                 </td>
@@ -159,50 +144,55 @@
     .badge-status-danger { background-color: #fef2f2; color: #dc2626; padding: 6px 14px; border-radius: 50px; font-weight: 600; font-size: 0.75rem; }
 
     .btn-action-view { 
-        background-color: #ffffff; 
-        color: #2563eb; 
-        border: 1px solid #e2e8f0; 
-        border-radius: 6px; 
-        font-size: 0.8rem; 
-        font-weight: 700;
-        text-align: center;
-        text-decoration: none;
+        background-color: #ffffff; color: #2563eb; border: 1px solid #e2e8f0; 
+        border-radius: 6px; font-size: 0.8rem; font-weight: 700; text-align: center; text-decoration: none;
     }
     .btn-action-view:hover { background-color: #2563eb; color: white; border-color: #2563eb; }
-    
     .btn-sm { font-size: 0.75rem; border-radius: 6px; }
 </style>
 
-{{-- SCRIPT SWEETALERT UNTUK TOMBOL APPROVE --}}
+{{-- SCRIPT SWEETALERT (Approve & Hapus) --}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Listener untuk tombol Approve
         const approveButtons = document.querySelectorAll('.btn-approve-trigger');
         approveButtons.forEach(button => {
             button.addEventListener('click', function(e) {
                 e.preventDefault();
                 const form = this.closest('form');
                 Swal.fire({
-                    title: 'Setujui Dokumen?',
-                    text: "Anda akan menyetujui dokumen ini secara langsung dari daftar.",
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonColor: '#198754',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Ya, Approve!',
-                    cancelButtonText: 'Batal'
+                    title: 'Setujui Dokumen?', text: "Approve langsung dari daftar?", icon: 'question',
+                    showCancelButton: true, confirmButtonColor: '#198754', confirmButtonText: 'Ya, Approve!', cancelButtonText: 'Batal'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        Swal.fire({
-                            title: 'Memproses...',
-                            text: 'Mohon tunggu',
-                            allowOutsideClick: false,
-                            didOpen: () => { Swal.showLoading() }
-                        });
+                        Swal.fire({title: 'Memproses...', didOpen: () => Swal.showLoading()});
                         form.submit();
                     }
                 });
             });
         });
     });
+
+    // Listener untuk tombol Hapus (BARU)
+    function confirmDeleteMsg(id) {
+        Swal.fire({
+            title: 'Hapus Dokumen?',
+            text: "Data SP2A ini akan dihapus permanen dari sistem!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('delete-msg-form-' + id).submit();
+            }
+        });
+    }
+
+    @if(session('success')) Swal.fire({ icon: 'success', title: 'Berhasil!', text: "{{ session('success') }}", timer: 2000, showConfirmButton: false }); @endif
+    @if(session('error')) Swal.fire({ icon: 'error', title: 'Gagal!', text: "{{ session('error') }}" }); @endif
 </script>
 @endsection
