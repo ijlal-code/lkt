@@ -7,60 +7,56 @@
             <h3 class="fw-bold mb-0 text-success"><i class="bi bi-clock-history me-2"></i>Riwayat Approval</h3>
             <p class="text-muted small mb-0">Arsip dokumen SP2A yang telah disetujui</p>
         </div>
-        <a href="{{ route('sp2a.index') }}" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left me-1"></i> Kembali
-        </a>
+         <a href="{{ url()->previous() }}" class="btn btn-outline-secondary me-2">
+                <i class="bi bi-arrow-left"></i> Kembali
+            </a>
     </div>
 
-    {{-- CARD FILTER --}}
+    {{-- CARD FILTER SEARCH (SATU KOLOM) --}}
     <div class="card shadow-sm border-0 rounded-4 mb-4">
         <div class="card-body bg-light rounded-4">
-            <form action="{{ route('sp2a.history') }}" method="GET" class="row g-2 align-items-center">
+            <form action="{{ route('sp2a.history') }}" method="GET">
+                <div class="row g-2 align-items-center">
+                    
+                    {{-- Label --}}
+                    <div class="col-md-2">
+                        <span class="fw-bold text-secondary"><i class="bi bi-search me-1"></i> Pencarian Arsip:</span>
+                    </div>
+
+                    {{-- Input Search (Flexible) --}}
+                    <div class="col-md-8">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0 text-muted">
+                                <i class="bi bi-calendar-event"></i>
+                            </span>
+                            <input type="text" name="search" class="form-control border-start-0 ps-0" 
+                                   placeholder="Ketik Tahun (2024), Bulan (Oktober), Tanggal (25), atau Nomor Surat..." 
+                                   value="{{ request('search') }}">
+                        </div>
+                    </div>
+
+                    {{-- Tombol Aksi --}}
+                    <div class="col-md-2 text-end">
+                        <button type="submit" class="btn btn-primary shadow-sm fw-bold w-100">
+                            Cari
+                        </button>
+                    </div>
+
+                </div>
                 
-                {{-- Label --}}
-                <div class="col-auto">
-                    <span class="fw-bold text-secondary"><i class="bi bi-funnel me-1"></i> Filter:</span>
-                </div>
-
-                {{-- Dropdown Bulan --}}
-                <div class="col-auto">
-                    <select name="bulan" class="form-select border-0 shadow-sm" style="min-width: 150px;">
-                        <option value="">-- Semua Bulan --</option>
-                        @foreach(range(1, 12) as $m)
-                            <option value="{{ $m }}" {{ request('bulan') == $m ? 'selected' : '' }}>
-                                {{ date('F', mktime(0, 0, 0, $m, 1)) }} </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                {{-- Dropdown Tahun --}}
-                <div class="col-auto">
-                    <select name="tahun" class="form-select border-0 shadow-sm" style="min-width: 120px;">
-                        <option value="">-- Tahun --</option>
-                        @php $currentYear = date('Y'); @endphp
-                        @foreach(range($currentYear, $currentYear - 3) as $y)
-                            <option value="{{ $y }}" {{ request('tahun') == $y ? 'selected' : '' }}>
-                                {{ $y }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                {{-- Tombol Cari --}}
-                <div class="col-auto">
-                    <button type="submit" class="btn btn-primary shadow-sm fw-bold">
-                        <i class="bi bi-search"></i> Cari
-                    </button>
-                    @if(request('bulan') || request('tahun'))
-                        <a href="{{ route('sp2a.history') }}" class="btn btn-outline-danger shadow-sm ms-1" title="Reset Filter">
-                            <i class="bi bi-x-lg"></i>
+                {{-- Tombol Reset (Muncul jika sedang mencari) --}}
+                @if(request('search'))
+                    <div class="mt-2 text-end">
+                        <a href="{{ route('sp2a.history') }}" class="text-decoration-none text-danger small fw-bold">
+                            <i class="bi bi-x-circle-fill"></i> Hapus Filter / Reset
                         </a>
-                    @endif
-                </div>
+                    </div>
+                @endif
             </form>
         </div>
     </div>
 
+    {{-- TABEL DATA --}}
     <div class="card shadow-sm border-0 rounded-4">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
@@ -78,7 +74,8 @@
                     <tr>
                         <td class="px-4">
                             <div class="fw-bold text-primary font-monospace">{{ $sp2a->nomor_sp2a ?? 'Proses' }}</div>
-                            <small class="text-muted">{{ $sp2a->tanggal_surat->format('d M Y') }}</small>
+                            {{-- Format tanggal Indonesia untuk memudahkan pembacaan --}}
+                            <small class="text-muted">{{ $sp2a->tanggal_surat->translatedFormat('d F Y') }}</small>
                         </td>
                         <td>{{ $sp2a->kepada_nama }}</td>
                         
@@ -106,7 +103,6 @@
                         </td>
 
                         <td class="text-center">
-                            {{-- TOMBOL PDF DI RIWAYAT --}}
                             <div class="btn-group shadow-sm rounded-3" role="group">
                                 <a href="{{ route('sp2a.show', $sp2a->id) }}" class="btn btn-sm btn-outline-primary" title="Lihat">
                                     <i class="bi bi-eye"></i>
@@ -120,8 +116,8 @@
                     @empty
                     <tr>
                         <td colspan="5" class="text-center py-5 text-muted">
-                            <i class="bi bi-calendar-x fs-1 d-block mb-2 text-secondary"></i>
-                            Tidak ada riwayat ditemukan untuk periode ini.
+                            <i class="bi bi-search fs-1 d-block mb-2 text-secondary"></i>
+                            Tidak ada dokumen yang cocok dengan pencarian <strong>"{{ request('search') }}"</strong>
                         </td>
                     </tr>
                     @endforelse

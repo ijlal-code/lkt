@@ -10,7 +10,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 class Sp2aController extends Controller
 {
     /**
-     * Menampilkan daftar semua SP2A
+     * Menampilkan daftar semua SP2A (Draft & Proses)
      */
     public function index()
     {
@@ -20,40 +20,41 @@ class Sp2aController extends Controller
 
     /**
      * Halaman Riwayat Approval (History)
+     * Dengan Filter Bulan & Tahun
      */
-    public function history(Request $request) // Tambahkan Request $request
-{
-    $role = Auth::user()->role;
-    $query = Sp2a::query();
+    public function history(Request $request)
+    {
+        $role = Auth::user()->role;
+        $query = Sp2a::query();
 
-    // 1. LOGIKA ROLE (Tetap seperti sebelumnya)
-    if ($role == 'sm') {
-        $query->whereNotNull('approved_sm_at');
-    } 
-    elseif ($role == 'smqa') {
-        $query->whereNotNull('approved_smqa_at');
-    } 
-    elseif ($role == 'gm') {
-        $query->whereNotNull('approved_gm_at');
-    } 
-    else {
-        $query->where('status', 'Approved By System');
+        // 1. LOGIKA ROLE (Filter data berdasarkan siapa yang login)
+        if ($role == 'sm') {
+            $query->whereNotNull('approved_sm_at');
+        } 
+        elseif ($role == 'smqa') {
+            $query->whereNotNull('approved_smqa_at');
+        } 
+        elseif ($role == 'gm') {
+            $query->whereNotNull('approved_gm_at');
+        } 
+        else {
+            // Untuk Admin/Staff/User lain melihat yang sudah selesai
+            $query->where('status', 'Approved By System');
+        }
+
+        // 2. FILTER PENCARIAN BULAN & TAHUN
+        if ($request->filled('bulan')) {
+            $query->whereMonth('tanggal_surat', $request->bulan);
+        }
+
+        if ($request->filled('tahun')) {
+            $query->whereYear('tanggal_surat', $request->tahun);
+        }
+
+        $riwayat = $query->latest()->get();
+        
+        return view('sp2a.history', compact('riwayat'));
     }
-
-    // 2. TAMBAHAN: LOGIKA FILTER BULAN & TAHUN
-    if ($request->filled('bulan')) {
-        $query->whereMonth('tanggal_surat', $request->bulan);
-    }
-
-    if ($request->filled('tahun')) {
-        $query->whereYear('tanggal_surat', $request->tahun);
-    }
-
-    $riwayat = $query->latest()->get();
-    
-    // Kirim data riwayat ke view
-    return view('sp2a.history', compact('riwayat'));
-}
 
     public function create()
     {
@@ -61,7 +62,7 @@ class Sp2aController extends Controller
     }
 
     /**
-     * Simpan SP2A Baru -> STATUS 'staff' TAPI LABEL 'Draft'
+     * Simpan SP2A Baru -> STATUS 'staff' (Draft)
      */
     public function store(Request $request)
     {
@@ -87,7 +88,7 @@ class Sp2aController extends Controller
             'penanda_tangan_nama' => $request->penanda_tangan_nama,
             'tembusan' => array_values(array_filter($request->tembusan ?? [])),
 
-            // PERBAIKAN: Gunakan 'staff' karena 'draft' tidak ada di ENUM database
+            // Inisialisasi Status
             'nomor_sp2a' => null,
             'current_step' => 'staff', 
             'status' => 'Draft (Belum Dikirim)', 
@@ -154,7 +155,6 @@ class Sp2aController extends Controller
 
         // LOGIKA UPDATE:
         // Tetap di 'staff' agar user bisa review dulu, baru klik "Proses" manual.
-        // Ini berlaku baik untuk Draft baru maupun Revisi.
         
         $sp2a->update([
             'tanggal_surat' => $request->tanggal_surat,
@@ -229,16 +229,22 @@ class Sp2aController extends Controller
     }
 
     /**
-     * Logic Koreksi (Kembalikan ke Staff)
+     * Logic Koreksi (Kembalikan ke Staff) dengan Info Role
      */
     public function koreksi(Request $request, $id)
     {
         $request->validate(['catatan' => 'required|string']);
         
         $sp2a = Sp2a::findOrFail($id);
+        
+        // Ambil role, jika kosong ganti jadi 'ATASAN'
+        $roleRaw = Auth::user()->role ?? 'ATASAN';
+        $rolePengoreksi = strtoupper($roleRaw); 
+
         $sp2a->update([
             'current_step' => 'staff',
-            'status' => 'Perlu Perbaikan (Dikembalikan oleh ' . Auth::user()->name . ')',
+            // Simpan status lengkap ke database
+            'status' => 'Perlu Perbaikan (Dikembalikan oleh ' . $rolePengoreksi . ')',
             'catatan_koreksi' => $request->catatan,
         ]);
 
