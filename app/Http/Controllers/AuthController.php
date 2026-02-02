@@ -30,12 +30,8 @@ class AuthController extends Controller
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
 
-            // 3. Cek Role untuk Redirect
-            if (Auth::user()->role == 'admin') {
-                return redirect()->route('ltk.index');
-            } else {
-                return redirect()->route('pesan.index');
-            }
+            // 3. REDIRECT KE DASHBOARD (Apapun Rolenya)
+            return redirect()->route('dashboard');
         }
 
         // 4. Jika Gagal
@@ -57,7 +53,7 @@ class AuthController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:6|confirmed', // butuh input name="password_confirmation"
+            'password' => 'required|min:6|confirmed', 
             'role' => 'required|string'
         ]);
 
@@ -72,12 +68,8 @@ class AuthController extends Controller
         // 3. Login Otomatis setelah Register
         Auth::login($user);
 
-        // 4. Redirect Sesuai Role
-        if ($user->role == 'admin') {
-            return redirect()->route('ltk.index');
-        } else {
-            return redirect()->route('pesan.index');
-        }
+        // 4. REDIRECT KE DASHBOARD (Apapun Rolenya)
+        return redirect()->route('dashboard');
     }
 
     // --- LOGOUT ---

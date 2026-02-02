@@ -157,17 +157,19 @@
             </div>
             
             <div class="list-group list-group-flush flex-grow-1 overflow-auto">
-                <a href="{{ url('/') }}" class="list-group-item list-group-item-action {{ Request::is('/') ? 'active' : '' }}">
+                <a href="{{ route('dashboard') }}" class="list-group-item list-group-item-action {{ Request::is('/') ? 'active' : '' }}">
                     <i class="bi bi-speedometer2 me-2"></i> Dashboard
                 </a>
 
                 @auth
-                    @if(Auth::user()->role == 'admin' || Auth::user()->role == 'staff')
-                        {{-- UBAH DISINI: Hapus class 'sidebar-heading' agar tidak ada padding besar --}}
+                    {{-- AREA KHUSUS ADMIN & STAFF --}}
+                    @if(in_array(Auth::user()->role, ['admin', 'staff']))
+                        
                         <div class="px-3 mt-3 mb-1 text-uppercase text-muted fw-bold" style="font-size: 0.75rem;">
-                            Manajer Admin
+                            Menu Operasional
                         </div>
 
+                        {{-- Menu LKT --}}
                         <a href="#submenuLKT" class="list-group-item list-group-item-action dropdown-toggle d-flex justify-content-between align-items-center" data-bs-toggle="collapse">
                             <span><i class="bi bi-file-earmark-text me-2"></i> LKT</span>
                         </a>
@@ -176,6 +178,7 @@
                             <a href="{{ route('ltk.create') }}" class="list-group-item list-group-item-action {{ Request::is('ltk/create') ? 'text-white fw-bold' : '' }}">Buat Baru</a>
                         </div>
 
+                        {{-- Menu SP2A --}}
                         <a href="#submenuSP2A" class="list-group-item list-group-item-action dropdown-toggle d-flex justify-content-between align-items-center" data-bs-toggle="collapse">
                             <span><i class="bi bi-exclamation-triangle me-2"></i> SP2A</span>
                         </a>
@@ -184,11 +187,18 @@
                             <a href="{{ route('sp2a.create') }}" class="list-group-item list-group-item-action {{ Request::is('sp2a/create') ? 'text-white fw-bold' : '' }}">Buat Baru</a>
                         </div>
 
-                        <a href="{{ route('users.index') }}" class="list-group-item list-group-item-action {{ Request::is('users*') ? 'active' : '' }}">
-                            <i class="bi bi-people-fill me-2"></i> Manajemen User
-                        </a>
+                        {{-- Manajemen User: HANYA ADMIN (Staff tidak melihat ini) --}}
+                        @if(Auth::user()->role == 'admin')
+                            <div class="px-3 mt-3 mb-1 text-uppercase text-muted fw-bold" style="font-size: 0.75rem;">
+                                Admin Area
+                            </div>
+                            <a href="{{ route('users.index') }}" class="list-group-item list-group-item-action {{ Request::is('users*') ? 'active' : '' }}">
+                                <i class="bi bi-people-fill me-2"></i> Manajemen User
+                            </a>
+                        @endif
+
                     @else
-                        {{-- UBAH DISINI: Penyesuaian yang sama untuk role lain --}}
+                        {{-- AREA KHUSUS APPROVER (SM, SMQA, GM) --}}
                         <div class="px-3 mt-3 mb-1 text-uppercase text-muted fw-bold" style="font-size: 0.75rem;">
                             Menu Personil
                         </div>
@@ -198,8 +208,8 @@
                         </a>
                     @endif
 
-                    {{-- Monitoring Section (SM, SMQA, GM) --}}
-                    @if(Auth::check() && in_array(Auth::user()->role, ['sm', 'smqa', 'gm']))
+                    {{-- Monitoring Section (Bisa dilihat oleh Approver) --}}
+                    @if(Auth::check() && in_array(Auth::user()->role, ['sm', 'smqa', 'gm', 'admin']))
                         <div class="px-3 mt-3 mb-1 text-uppercase text-muted fw-bold" style="font-size: 0.75rem;">
                             Monitoring
                         </div>
