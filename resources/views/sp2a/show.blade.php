@@ -138,16 +138,20 @@
             </div>
 
             {{-- TANDA TANGAN --}}
+            {{-- TANDA TANGAN --}}
             <div class="row mt-5">
                 <div class="col-md-6">
                     <p>Pangkep, {{ \Carbon\Carbon::parse($sp2a->tanggal_surat)->translatedFormat('d F Y') }}</p>
                     <p>Hormat Kami,</p>
 
-                    <div style="margin:20px 0;">
+                    {{-- PERBAIKAN: Margin diatur agar dekat dengan nama, font diperkecil --}}
+                    <div style="margin-top: 40px; margin-bottom: 5px;">
                         @if($sp2a->current_step == 'finished')
-                            <strong>APPROVED BY SYSTEM</strong>
+                            <span class="fw-bold text-uppercase" style="font-size: 0.9rem; color: #000;">
+                                APPROVED BY SYSTEM
+                            </span>
                         @else
-                            <em class="text-muted">[Menunggu Approval GM]</em>
+                            <em class="text-muted small">[Menunggu Approval GM]</em>
                         @endif
                     </div>
 

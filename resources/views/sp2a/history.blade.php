@@ -77,7 +77,10 @@
                             {{-- Format tanggal Indonesia untuk memudahkan pembacaan --}}
                             <small class="text-muted">{{ $sp2a->tanggal_surat->translatedFormat('d F Y') }}</small>
                         </td>
-                        <td>{{ $sp2a->kepada_nama }}</td>
+                        <td>
+    {{-- Cek apakah array, jika ya gabung dengan koma. Jika string tampilkan langsung --}}
+    {{ is_array($sp2a->kepada_nama) ? implode(', ', $sp2a->kepada_nama) : $sp2a->kepada_nama }}
+</td>
                         
                         {{-- STATUS REALTIME --}}
                         <td>

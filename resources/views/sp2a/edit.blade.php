@@ -47,10 +47,40 @@
                     <hr class="my-4">
 
                     {{-- TUJUAN --}}
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold text-danger">Kepada (Nama Penerima)</label>
-                        <input type="text" name="kepada_nama" class="form-control" value="{{ old('kepada_nama', $sp2a->kepada_nama) }}" required>
-                    </div>
+                   <div class="col-12">
+    <label class="form-label fw-bold text-danger">Kepada Yth (Daftar Penerima)</label>
+    <div class="form-text mb-2">Silakan ubah, tambah, atau hapus penerima surat.</div>
+
+    <div id="kepada-wrapper">
+        @php
+            // Ambil data dari old input (jika validasi gagal) ATAU dari database
+            $kepadaList = old('kepada_nama', $sp2a->kepada_nama);
+            
+            // Jaga-jaga jika data kosong atau bukan array, ubah jadi array 1 elemen kosong
+            if (!is_array($kepadaList)) {
+                $kepadaList = $kepadaList ? [$kepadaList] : ['']; 
+            }
+        @endphp
+
+        @foreach($kepadaList as $index => $nama)
+            <div class="input-group mb-2">
+                <span class="input-group-text bg-white">{{ $loop->iteration }}.</span>
+                
+                {{-- PERBAIKAN UTAMA: Loop array dan tampilkan value satu per satu --}}
+                <input type="text" name="kepada_nama[]" class="form-control" value="{{ $nama }}" required>
+                
+                {{-- Tombol Hapus (hanya muncul jika bukan baris pertama) --}}
+                @if($index > 0)
+                    <button type="button" class="btn btn-outline-danger remove-row"><i class="bi bi-trash"></i></button>
+                @endif
+            </div>
+        @endforeach
+    </div>
+
+    <button type="button" class="btn btn-sm btn-outline-danger mt-1" id="add-kepada">
+        <i class="bi bi-person-plus-fill me-1"></i> Tambah Penerima
+    </button>
+</div>
                     
                     <div class="col-md-6">
                         <label class="form-label fw-bold">Email Penerima (Opsional)</label>
@@ -135,7 +165,44 @@
     }
 </style>
 
+
 <script src="https://cdn.ckeditor.com/ckeditor5/41.2.0/classic/ckeditor.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- LOGIKA DINAMIS KEPADA (Sama seperti Create) ---
+        const wrapperKepada = document.getElementById('kepada-wrapper');
+        
+        // Event Listener Tambah
+        document.getElementById('add-kepada').addEventListener('click', function() {
+            const count = wrapperKepada.children.length + 1;
+            const div = document.createElement('div');
+            div.className = 'input-group mb-2';
+            div.innerHTML = `
+                <span class="input-group-text bg-white">${count}.</span>
+                <input type="text" name="kepada_nama[]" class="form-control" placeholder="Nama Penerima Lainnya...">
+                <button type="button" class="btn btn-outline-danger remove-row"><i class="bi bi-trash"></i></button>
+            `;
+            wrapperKepada.appendChild(div);
+        });
+
+        // Event Listener Hapus
+        wrapperKepada.addEventListener('click', function(e) {
+            if (e.target.closest('.remove-row')) {
+                const row = e.target.closest('.input-group');
+                // Sisakan minimal 1 baris agar tidak kosong melompong
+                if (wrapperKepada.children.length > 1) {
+                    row.remove();
+                    // Update ulang nomor urut (1, 2, 3...)
+                    Array.from(wrapperKepada.children).forEach((child, index) => {
+                        child.querySelector('.input-group-text').innerText = (index + 1) + '.';
+                    });
+                } else {
+                    alert("Minimal harus ada satu penerima.");
+                }
+            }
+        });
+    });
+</script>
 <script>
     ClassicEditor
         .create(document.querySelector('#isi_surat'), {
