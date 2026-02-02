@@ -35,7 +35,15 @@
                                 {{ $s->nomor_sp2a ?? 'DRAFT' }}
                             </td>
                             <td>
-                                <div class="fw-bold">{{ $s->kepada_nama }}</div>
+                               <div class="fw-bold">
+    @if(is_array($s->kepada_nama))
+        @foreach($s->kepada_nama as $nama)
+            <div>{{ $nama }}</div>
+        @endforeach
+    @else
+        {{ $s->kepada_nama }}
+    @endif
+</div>
                                 <div class="small text-muted">Dari: {{ $s->dari_nama }}</div>
                             </td>
                             <td>{{ $s->tanggal_surat->format('d/m/Y') }}</td>

@@ -69,40 +69,66 @@
 
             {{-- META SURAT (FORMAT RESMI FOTO) --}}
             <table class="w-100 mb-4" style="font-size:15px;">
-                <tr>
-                    <td width="15%">Kepada Yth.</td>
-                    <td width="2%">:</td>
-                    <td>{!! nl2br(e($sp2a->kepada_nama)) !!}</td>
-                </tr>
-                <tr>
-                    <td>Dari</td>
-                    <td>:</td>
-                    <td>{{ $sp2a->dari_nama }}</td>
-                </tr>
-                <tr>
-                    <td>Nomor</td>
-                    <td>:</td>
-                    <td>
-                        @if($sp2a->current_step == 'finished')
-                            {{ $sp2a->nomor_sp2a }}
-                        @else
-                            <span class="fst-italic text-muted">
-                                /SP2A/PW.00/11.00/07-2025
-                            </span>
-                        @endif
-                    </td>
-                </tr>
-                <tr>
-                    <td>Lampiran</td>
-                    <td>:</td>
-                    <td>{{ $sp2a->lampiran ?? '1 (satu) berkas' }}</td>
-                </tr>
-                <tr>
-                    <td class="align-top">Perihal</td>
-                    <td class="align-top">:</td>
-                    <td class="fw-bold">{{ $sp2a->perihal }}</td>
-                </tr>
-            </table>
+              {{-- META SURAT (RAPI SEPERTI FOTO) --}}
+<div style="font-size:15px;" class="mb-5">
+
+    {{-- KEPADA YTH --}}
+    <div style="display:flex; align-items:flex-start; margin-bottom:4px;">
+        <div style="width:17%;">Kepada Yth.</div>
+        <div style="width:3%;">:</div>
+        <div style="flex:1;">
+            @php
+                $kepadaList = is_array($sp2a->kepada_nama)
+                    ? $sp2a->kepada_nama
+                    : preg_split('/\r\n|\r|\n/', $sp2a->kepada_nama);
+            @endphp
+
+            @foreach($kepadaList as $kepada)
+                <div>{{ $kepada }}</div>
+            @endforeach
+        </div>
+    </div>
+
+    {{-- DARI --}}
+    <div style="display:flex; align-items:flex-start; margin-bottom:4px;">
+        <div style="width:17%;">Dari</div>
+        <div style="width:3%;">:</div>
+        <div style="flex:1;">{{ $sp2a->dari_nama }}</div>
+    </div>
+
+    {{-- NOMOR --}}
+    <div style="display:flex; align-items:flex-start; margin-bottom:4px;">
+        <div style="width:17%;">Nomor</div>
+        <div style="width:3%;">:</div>
+        <div style="flex:1;">
+            @if($sp2a->current_step == 'finished')
+                {{ $sp2a->nomor_sp2a }}
+            @else
+                <span class="fst-italic text-muted">
+                    /SP2A/PW.00/11.00/07-2025
+                </span>
+            @endif
+        </div>
+    </div>
+
+    {{-- LAMPIRAN --}}
+    <div style="display:flex; align-items:flex-start; margin-bottom:4px;">
+        <div style="width:17%;">Lampiran</div>
+        <div style="width:3%;">:</div>
+        <div style="flex:1;">{{ $sp2a->lampiran ?? '1 (satu) berkas' }}</div>
+    </div>
+
+    {{-- PERIHAL --}}
+    <div style="display:flex; align-items:flex-start;">
+        <div style="width:17%;">Perihal</div>
+        <div style="width:3%;">:</div>
+        <div style="flex:1; font-weight:bold;">
+            {{ $sp2a->perihal }}
+        </div>
+    </div>
+
+</div>
+  
 
             {{-- ===================== --}}
             {{-- ISI SURAT (TIDAK DIUBAH) --}}

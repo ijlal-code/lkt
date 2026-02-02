@@ -42,12 +42,23 @@
                         <div class="form-text mb-2">Masukkan nama-nama penerima surat (Auditi/Unit).</div>
                         
                         <div id="kepada-wrapper">
-                            <div class="input-group mb-2">
-                                <span class="input-group-text bg-white">1.</span>
-                                <input type="text" name="kepada_nama[]" class="form-control" placeholder="Nama Penerima 1" required>
-                                {{-- Tombol hapus disembunyikan untuk baris pertama agar minimal ada 1 --}}
-                            </div>
-                        </div>
+    @if(old('kepada_nama'))
+        @foreach(old('kepada_nama') as $index => $val)
+            <div class="input-group mb-2">
+                <span class="input-group-text bg-white">{{ $loop->iteration }}.</span>
+                <input type="text" name="kepada_nama[]" class="form-control" value="{{ $val }}" required>
+                @if($index > 0)
+                    <button type="button" class="btn btn-outline-danger remove-row"><i class="bi bi-trash"></i></button>
+                @endif
+            </div>
+        @endforeach
+    @else
+        <div class="input-group mb-2">
+            <span class="input-group-text bg-white">1.</span>
+            <input type="text" name="kepada_nama[]" class="form-control" placeholder="Nama Penerima 1" required>
+        </div>
+    @endif
+</div>
                         
                         <button type="button" class="btn btn-sm btn-outline-danger mt-1" id="add-kepada">
                             <i class="bi bi-person-plus-fill me-1"></i> Tambah Penerima
