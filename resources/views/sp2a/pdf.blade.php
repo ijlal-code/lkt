@@ -68,11 +68,43 @@
         .spacer {
             height: 30px; /* Jarak pengganti <br> */
         }
+        /* ================= ISI SURAT (TABLE FIX) ================= */
         .isi-surat {
             text-align: justify;
-            min-height: 100px;
             line-height: 1.5;
+            width: 100%; /* Pastikan kontainer penuh */
         }
+        
+        /* CSS KHUSUS TABEL PDF AGAR TIDAK KELUAR KERTAS */
+        .isi-surat table {
+            width: 100% !important;      /* Paksa lebar tabel mengikuti kertas */
+            table-layout: fixed;         /* PENTING: Mencegah tabel melebar otomatis */
+            border-collapse: collapse !important;
+            border-spacing: 0;
+            margin-bottom: 10px;
+        }
+
+        .isi-surat table td, 
+        .isi-surat table th {
+            border: 1px solid #000 !important;
+            padding: 4px 6px;
+            vertical-align: top;
+            word-wrap: break-word;       /* PENTING: Teks panjang dipaksa turun baris */
+            word-break: break-all;       /* Opsional: Memutus kata jika terlalu panjang */
+            font-size: 12pt;             /* Samakan ukuran font isi tabel */
+        }
+        
+        /* Penyesuaian gambar dalam tabel jika ada */
+        .isi-surat img {
+            max-width: 100%;
+            height: auto;
+        }
+
+.isi-surat td, .isi-surat th {
+    /* Ini style default jika warna dari Word gagal terbaca */
+    border: 1px solid black; 
+    padding: 4px;
+}
 
         /* ================= TTD ================= */
         .signature-wrapper {
