@@ -179,13 +179,22 @@
                         </div>
 
                         {{-- Menu SP2A --}}
-                        <a href="#submenuSP2A" class="list-group-item list-group-item-action dropdown-toggle d-flex justify-content-between align-items-center" data-bs-toggle="collapse">
-                            <span><i class="bi bi-exclamation-triangle me-2"></i> SP2A</span>
-                        </a>
-                        <div class="collapse sidebar-submenu {{ Request::is('sp2a*') ? 'show' : '' }}" id="submenuSP2A">
-                            <a href="{{ route('sp2a.index') }}" class="list-group-item list-group-item-action {{ Request::is('sp2a') ? 'text-white fw-bold' : '' }}">Daftar SP2A</a>
-                            <a href="{{ route('sp2a.create') }}" class="list-group-item list-group-item-action {{ Request::is('sp2a/create') ? 'text-white fw-bold' : '' }}">Buat Baru</a>
-                        </div>
+<a href="#submenuSP2A" class="list-group-item list-group-item-action dropdown-toggle d-flex justify-content-between align-items-center" data-bs-toggle="collapse">
+    <span><i class="bi bi-exclamation-triangle me-2"></i> SP2A</span>
+</a>
+<div class="collapse sidebar-submenu {{ Request::is('sp2a*') || Request::is('settings*') ? 'show' : '' }}" id="submenuSP2A">
+    <a href="{{ route('sp2a.index') }}" class="list-group-item list-group-item-action {{ Request::is('sp2a') ? 'text-white fw-bold' : '' }}">
+        Daftar SP2A
+    </a>
+    <a href="{{ route('sp2a.create') }}" class="list-group-item list-group-item-action {{ Request::is('sp2a/create') ? 'text-white fw-bold' : '' }}">
+        Buat Baru
+    </a>
+    {{-- Menu Pengaturan diletakkan di dalam submenu agar style padding-nya sama --}}
+    <a href="{{ route('settings.index') }}" class="list-group-item list-group-item-action {{ Request::is('settings*') ? 'text-white fw-bold' : '' }}">
+        Pengaturan
+    </a>
+</div>
+
 
                         {{-- Manajemen User: HANYA ADMIN (Staff tidak melihat ini) --}}
                         @if(Auth::user()->role == 'admin')

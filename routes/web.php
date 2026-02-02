@@ -9,6 +9,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\PesanController; 
 use App\Http\Controllers\AuthController; 
 use App\Http\Controllers\HomeController; 
+use App\Http\Controllers\SettingController; 
 
 // --- ROUTE AUTENTIKASI ---
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -34,6 +35,9 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::resource('ltk', LtkController::class);
     Route::resource('contacts', ContactController::class);
     Route::resource('users', UserController::class);
+    // Route Settings
+    Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
+    Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
 });
 
 
@@ -42,6 +46,10 @@ Route::middleware(['auth'])->group(function () {
     
     // Resource LTK (Staff juga butuh akses ini)
     Route::resource('ltk', LtkController::class)->except(['destroy']); // Sesuaikan jika staff tidak boleh hapus
+
+    // Route Settings
+    Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
+    Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
 
     // Fitur Pesan
     Route::get('/pesan', [PesanController::class, 'index'])->name('pesan.index');

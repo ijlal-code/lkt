@@ -12,14 +12,14 @@ class Sp2a extends Model
     protected $fillable = [
         'nomor_sp2a',
         'tanggal_surat',
-        'kepada_nama',    // Input Teks Manual
-        'kepada_email',   // Input Teks Manual
+        'kepada_nama',    // Sekarang menyimpan Array/JSON
+        // 'kepada_email', // DIHAPUS
         'dari_nama',
         'perihal',
         'dasar_surat',
         'isi_surat',
         'penanda_tangan_nama',
-        'tembusan',       // Field Baru (Array List)
+        'tembusan',
         'status',
         'current_step',
         'catatan_koreksi',
@@ -33,6 +33,7 @@ class Sp2a extends Model
         'approved_sm_at' => 'datetime',
         'approved_smqa_at' => 'datetime',
         'approved_gm_at' => 'datetime',
-        'tembusan' => 'array', // PENTING: Agar otomatis jadi Array saat diambil
+        'tembusan' => 'array',
+        'kepada_nama' => 'array', // PENTING: Cast ke array otomatis
     ];
 }

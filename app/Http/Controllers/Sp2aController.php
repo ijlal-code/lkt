@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Sp2a;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Barryvdh\DomPDF\Facade\Pdf; 
+
 
 class Sp2aController extends Controller
 {
@@ -56,46 +58,53 @@ class Sp2aController extends Controller
         return view('sp2a.history', compact('riwayat'));
     }
 
-    public function create()
+  public function create()
     {
-        return view('sp2a.create');
+        // AMBIL NAMA GM DARI SETTING
+        $gmSetting = Setting::where('key', 'gm_name')->first();
+        $gmName = $gmSetting ? $gmSetting->value : 'Silakan Atur Nama GM di Menu Setting';
+
+        return view('sp2a.create', compact('gmName'));
     }
 
     /**
      * Simpan SP2A Baru -> STATUS 'staff' (Draft)
      */
-    public function store(Request $request)
+   public function store(Request $request)
     {
         $request->validate([
             'tanggal_surat' => 'required|date',
-            'kepada_nama' => 'required|string',
+            'kepada_nama' => 'required|array', // Validasi Array
+            'kepada_nama.*' => 'required|string', // Validasi item di dalam array
             'dari_nama' => 'required|string',
             'perihal' => 'required|string',
             'dasar_surat' => 'required|string',
             'isi_surat' => 'required',
-            'penanda_tangan_nama' => 'required|string',
-            'tembusan' => 'nullable|array',
+            // penanda_tangan_nama diambil dari hidden input atau query ulang
         ]);
+
+        // Pastikan nama GM diambil data terbaru dari DB (agar aman) atau dari request
+        $gmSetting = Setting::where('key', 'gm_name')->first();
+        $fixedGmName = $gmSetting ? $gmSetting->value : $request->penanda_tangan_nama;
 
         Sp2a::create([
             'tanggal_surat' => $request->tanggal_surat,
-            'kepada_nama'   => $request->kepada_nama,
-            'kepada_email'  => $request->kepada_email,
+            'kepada_nama'   => array_values(array_filter($request->kepada_nama ?? [])), // Simpan Array
+            // 'kepada_email'  => dihapus,
             'dari_nama'     => $request->dari_nama,
             'perihal'       => $request->perihal,
             'dasar_surat'   => $request->dasar_surat,
             'isi_surat'     => $request->isi_surat,
-            'penanda_tangan_nama' => $request->penanda_tangan_nama,
+            'penanda_tangan_nama' => $fixedGmName, // Otomatis
             'tembusan' => array_values(array_filter($request->tembusan ?? [])),
-
-            // Inisialisasi Status
+            
             'nomor_sp2a' => null,
             'current_step' => 'staff', 
             'status' => 'Draft (Belum Dikirim)', 
             'catatan_koreksi' => null,
         ]);
 
-        return redirect()->route('sp2a.index')->with('success', 'Draft SP2A berhasil disimpan. Silakan klik tombol "Proses" untuk mengirim ke SM.');
+        return redirect()->route('sp2a.index')->with('success', 'Draft SP2A berhasil disimpan.');
     }
 
     /**
@@ -138,7 +147,7 @@ class Sp2aController extends Controller
         return view('sp2a.edit', compact('sp2a'));
     }
 
-    public function update(Request $request, $id)
+   public function update(Request $request, $id)
     {
         $sp2a = Sp2a::findOrFail($id);
 
@@ -147,36 +156,35 @@ class Sp2aController extends Controller
         }
 
         $request->validate([
-            'tanggal_surat' => 'required|date',
-            'kepada_nama' => 'required|string',
+            'kepada_nama' => 'required|array', // Array
             'isi_surat' => 'required',
-            'tembusan' => 'nullable|array',
         ]);
-
-        // LOGIKA UPDATE:
-        // Tetap di 'staff' agar user bisa review dulu, baru klik "Proses" manual.
         
+        // Ambil GM Name eksisting (biasanya tidak berubah saat edit, atau mau update otomatis juga boleh)
+        // Disini kita biarkan penanda tangan nama sesuai saat dibuat, atau update dari setting:
+        $gmSetting = Setting::where('key', 'gm_name')->first();
+        $fixedGmName = $gmSetting ? $gmSetting->value : $sp2a->penanda_tangan_nama;
+
         $sp2a->update([
             'tanggal_surat' => $request->tanggal_surat,
-            'kepada_nama' => $request->kepada_nama,
-            'kepada_email' => $request->kepada_email,
+            'kepada_nama' => array_values(array_filter($request->kepada_nama ?? [])),
+            // 'kepada_email' => dihapus
             'dari_nama' => $request->dari_nama,
             'perihal' => $request->perihal,
             'dasar_surat' => $request->dasar_surat,
             'isi_surat' => $request->isi_surat,
-            'penanda_tangan_nama' => $request->penanda_tangan_nama,
+            'penanda_tangan_nama' => $fixedGmName,
             'tembusan' => array_values(array_filter($request->tembusan ?? [])),
 
-            'current_step' => 'staff', // Tetap di Staff
-            'status' => 'Draft (Telah Diupdate)', // Update status info
+            'current_step' => 'staff',
+            'status' => 'Draft (Telah Diupdate)',
             
-            // Reset approval history jika ada perubahan konten
             'approved_sm_at' => null,
             'approved_smqa_at' => null,
             'approved_gm_at' => null,
         ]);
 
-        return redirect()->route('sp2a.index')->with('success', 'Draft berhasil diperbarui. Klik tombol "Proses" di menu aksi untuk mengirim.');
+        return redirect()->route('sp2a.index')->with('success', 'Draft berhasil diperbarui.');
     }
 
     /**
