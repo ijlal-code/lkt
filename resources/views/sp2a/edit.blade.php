@@ -166,7 +166,50 @@
 </style>
 
 
-<script src="https://cdn.ckeditor.com/ckeditor5/41.2.0/classic/ckeditor.js"></script>
+{{-- Script TinyMCE (Versi 6 Stabil) --}}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js"></script>
+
+<script>
+    tinymce.init({
+        selector: '#isi_surat', // ID textarea Anda
+        height: 500,
+        menubar: false,
+        branding: false, // Menghilangkan tulisan "Powered by TinyMCE"
+        statusbar: false,
+        
+        // Plugin Penting untuk Tabel dan Paste dari Word
+        plugins: 'table lists advlist autolink link image charmap preview anchor pagebreak',
+        
+        // Toolbar Lengkap
+        toolbar: 'undo redo | styles | bold italic underline | alignleft aligncenter alignright alignjustify | ' +
+                 'bullist numlist outdent indent | table tabledelete | ' +
+                 'forecolor backcolor',
+
+        // KONFIGURASI AGAR FORMAT WORD (WARNA GARIS TABEL) TIDAK HILANG
+        paste_data_images: true, // Izinkan gambar di-paste
+        paste_as_text: false,    // Pastikan ini FALSE agar format HTML terbawa
+        
+        // Opsi Tabel agar border styling valid
+        table_default_attributes: {
+            border: '1'
+        },
+        table_default_styles: {
+            'border-collapse': 'collapse',
+            'width': '100%'
+        },
+        
+        // Mengizinkan style inline (seperti border-color) dari Word
+        valid_elements: '*[*]', // PENTING: Mengizinkan semua tag dan atribut
+        extended_valid_elements: 'table[style|border|width|cellspacing|cellpadding],tr[style],td[style|width|colspan|rowspan],th[style|width|colspan|rowspan]',
+        
+        // CSS Editor agar terlihat mirip kertas
+        content_style: `
+            body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.5; padding: 15px; }
+            table { border-collapse: collapse; width: 100%; }
+            table td, table th { padding: 5px; }
+        `
+    });
+</script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // --- LOGIKA DINAMIS KEPADA (Sama seperti Create) ---
