@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use Mpdf\Mpdf;
 use App\Models\Sp2a;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Barryvdh\DomPDF\Facade\Pdf; 
+
 
 
 class Sp2aController extends Controller
@@ -263,13 +264,36 @@ class Sp2aController extends Controller
      * Fitur Download PDF
      */
     public function downloadPdf($id)
-    {
-        $sp2a = Sp2a::findOrFail($id);
-        $pdf = Pdf::loadView('sp2a.pdf', compact('sp2a'));
-        $pdf->setPaper('A4', 'portrait');
-        $fileName = 'SP2A_' . ($sp2a->nomor_sp2a ? str_replace('/', '-', $sp2a->nomor_sp2a) : 'DRAFT') . '.pdf';
-        return $pdf->download($fileName);
-    }
+{
+    $sp2a = Sp2a::findOrFail($id);
+    
+    // 1. Render View ke dalam String HTML
+    $html = view('sp2a.pdf', compact('sp2a'))->render();
+
+    // 2. Setup mPDF
+    // Format [215, 330] adalah ukuran F4/Folio dalam mm (8.5 x 13 inch)
+    // Sesuai dengan CSS @page kamu sebelumnya.
+    $mpdf = new Mpdf([
+        'mode' => 'utf-8', 
+        'format' => [215, 330], 
+        'orientation' => 'P',
+        'margin_left' => 15,
+        'margin_right' => 15,
+        'margin_top' => 15,
+        'margin_bottom' => 15,
+    ]);
+
+    // 3. Masukkan HTML ke mPDF
+    $mpdf->WriteHTML($html);
+
+    // 4. Generate Nama File
+    $nomorSurat = $sp2a->nomor_sp2a ? str_replace('/', '-', $sp2a->nomor_sp2a) : 'DRAFT';
+    $fileName = 'SP2A_' . $nomorSurat . '.pdf';
+
+    // 5. Output Download (D) atau Inline (I)
+    // 'D' akan langsung memaksa browser mendownload file
+    return $mpdf->Output($fileName, \Mpdf\Output\Destination::DOWNLOAD);
+}
 
     /**
      * Hapus Dokumen
