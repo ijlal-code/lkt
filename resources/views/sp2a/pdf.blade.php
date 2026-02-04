@@ -5,30 +5,19 @@
     <title>SP2A - {{ $sp2a->nomor_sp2a ?? 'DRAFT' }}</title>
 
     <style>
-       /* ===============================
-           PAGE SETUP 
+        /* ===============================
+           PAGE SETUP
            =============================== */
         @page {
-            /* Samakan ukuran dengan yang ada di Controller (230mm x 330mm) */
-            size: 230mm 330mm; 
-            
-            /* Margin di sini biasanya akan di-override oleh controller, 
-               tapi baiknya disamakan atau dihapus biar tidak konflik.
-               Kita set 'margin' CSS sedikit lebih kecil agar konten aman. */
-            margin: 15mm; 
+            size: 230mm 330mm;
+            margin: 15mm;
         }
 
         body {
             font-family: "Times New Roman", serif;
             font-size: 12pt;
+            line-height: 1.5;
             color: #000;
-            line-height: 1.6;
-        }
-
-        /* Pastikan tabel tidak dipaksa mengecil, biarkan dia memenuhi lebar */
-        table {
-            width: 100%;
-            border-collapse: collapse;
         }
 
         /* ===============================
@@ -38,109 +27,97 @@
         .text-right  { text-align: right; }
         .fw-bold { font-weight: bold; }
         .underline { text-decoration: underline; }
-        .mb-4 { margin-bottom: 20px; }
         .mb-5 { margin-bottom: 30px; }
 
         /* ===============================
-           KOP SURAT
+           KOP SURAT & META
            =============================== */
         table.kop {
             width: 100%;
-            border-bottom: 3px solid black;
-            margin-bottom: 30px;
+            border-bottom: 3px solid #000;
             border-collapse: collapse;
+            margin-bottom: 30px;
+            page-break-inside: avoid;
         }
-        table.kop td {
-            vertical-align: middle;
-            padding-bottom: 10px;
-        }
+        table.kop td { border: none; padding-bottom: 10px; vertical-align: middle; }
 
-        /* ===============================
-           META SURAT
-           =============================== */
-        .meta {
-            font-size: 12pt;
-            line-height: 1.6;
-            margin-bottom: 35px;
-        }
-        .meta-row {
-            display: table;
+        table.meta {
             width: 100%;
-            margin-bottom: 6px;
+            border-collapse: collapse;
+            margin-bottom: 35px;
+            font-size: 12pt;
+            page-break-inside: avoid;
         }
-        .meta-label {
-            display: table-cell;
-            width: 17%;
-        }
-        .meta-sep {
-            display: table-cell;
-            width: 3%;
-        }
-        .meta-val {
-            display: table-cell;
-            width: 80%;
-        }
+        table.meta td { border: none; padding: 2px 0; vertical-align: top; }
+        
+        .label { width: 17%; }
+        .sep { width: 3%; text-align: center; }
+        .val { width: 80%; }
 
         /* ===============================
-           ISI SURAT
+           ISI SURAT & TABEL (INTI PERBAIKAN)
            =============================== */
         .isi-surat {
             text-align: justify;
             margin-bottom: 40px;
         }
+
         .isi-surat p {
             margin: 0 0 10px 0;
         }
+
+        /* 1. Setting Tabel Utama */
         .isi-surat table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 12px 0;
+            width: 100% !important;
+            border-collapse: collapse !important; /* Wajib collapse agar garis menjadi satu (single line) */
+            margin-top: 10px; 
+            margin-bottom: 20px; 
+            
+            /* Logic 1 Tabel 1 Halaman */
+            page-break-inside: avoid; 
         }
-        .isi-surat th,
-        .isi-surat td {
-            border-top: 1px solid black;
-            border-right: 1px solid black;
-            border-bottom: 1px solid black;
-            border-left: 1px solid black;
+
+        /* 2. Setting Garis Baris & Sel (Selector Lengkap) */
+        .isi-surat table tr,
+        .isi-surat table th,
+        .isi-surat table td {
+            /* !important untuk menimpa style bawaan editor */
+            border: 1px solid #000 !important; 
             padding: 6px;
             vertical-align: top;
+            font-size: 12pt;
+            
+            /* Pastikan background tidak menutupi garis */
+            background-clip: padding-box; 
         }
 
         /* ===============================
-           TANDA TANGAN
+           TTD & FOOTER
            =============================== */
         table.ttd {
             width: 100%;
             margin-top: 45px;
+            border-collapse: collapse;
+            page-break-inside: avoid;
         }
+        table.ttd td { border: none; }
 
-        /* ===============================
-           TEMBUSAN & FOOTER
-           =============================== */
-        .tembusan {
-            margin-top: 30px;
-        }
+        .tembusan { margin-top: 30px; page-break-inside: avoid; }
+
         .footer {
-            margin-top: 45px;
-            padding-top: 12px;
-            border-top: 1px solid #777;
+            margin-top: 50px;
+            padding-top: 10px;
+            border-top: 1px solid #aaa;
             font-size: 9pt;
             font-style: italic;
             color: #555;
-        }
-
-        /* DomPDF safety */
-        table, tr, td, th {
-            page-break-inside: avoid;
         }
     </style>
 </head>
 
 <body>
 
-{{-- ===============================
-   KOP SURAT
-   =============================== --}}
+{{-- KOP SURAT --}}
 <table class="kop">
     <tr>
         <td width="20%">
@@ -160,26 +137,19 @@
     </tr>
 </table>
 
-{{-- ===============================
-   JUDUL
-   =============================== --}}
+{{-- JUDUL --}}
 <div class="text-center mb-5">
-    <div class="fw-bold underline text-uppercase"
-         style="font-size:14pt; letter-spacing:0.5px;">
+    <div class="fw-bold underline text-uppercase" style="font-size:14pt; letter-spacing:0.5px;">
         SURAT PERINTAH PELAKSANAAN AUDIT (SP2A)
     </div>
 </div>
 
-{{-- ===============================
-   META SURAT
-   =============================== --}}
-<div class="meta">
-
-    {{-- KEPADA --}}
-    <div class="meta-row">
-        <div class="meta-label">Kepada Yth.</div>
-        <div class="meta-sep">:</div>
-        <div class="meta-val">
+{{-- META SURAT --}}
+<table class="meta">
+    <tr>
+        <td class="label">Kepada Yth.</td>
+        <td class="sep">:</td>
+        <td class="val">
             @php
                 $kepadaList = is_array($sp2a->kepada_nama)
                     ? $sp2a->kepada_nama
@@ -188,59 +158,53 @@
             @foreach($kepadaList as $kepada)
                 <div>{{ $kepada }}</div>
             @endforeach
-        </div>
-    </div>
-
-    {{-- DARI --}}
-    <div class="meta-row">
-        <div class="meta-label">Dari</div>
-        <div class="meta-sep">:</div>
-        <div class="meta-val">{{ $sp2a->dari_nama }}</div>
-    </div>
-
-    {{-- NOMOR --}}
-    <div class="meta-row">
-        <div class="meta-label">Nomor</div>
-        <div class="meta-sep">:</div>
-        <div class="meta-val">
+        </td>
+    </tr>
+    <tr>
+        <td class="label">Dari</td>
+        <td class="sep">:</td>
+        <td class="val">{{ $sp2a->dari_nama }}</td>
+    </tr>
+    <tr>
+        <td class="label">Nomor</td>
+        <td class="sep">:</td>
+        <td class="val">
             @if($sp2a->current_step == 'finished')
                 {{ $sp2a->nomor_sp2a }}
             @else
                 <em>/SP2A/PW.00/11.00/07-2025</em>
             @endif
-        </div>
-    </div>
+        </td>
+    </tr>
+    <tr>
+        <td class="label">Lampiran</td>
+        <td class="sep">:</td>
+        <td class="val">{{ $sp2a->lampiran ?? '1 (satu) berkas' }}</td>
+    </tr>
+    <tr>
+        <td class="label">Perihal</td>
+        <td class="sep">:</td>
+        <td class="val fw-bold">{{ $sp2a->perihal }}</td>
+    </tr>
+</table>
 
-    {{-- LAMPIRAN --}}
-    <div class="meta-row">
-        <div class="meta-label">Lampiran</div>
-        <div class="meta-sep">:</div>
-        <div class="meta-val">
-            {{ $sp2a->lampiran ?? '1 (satu) berkas' }}
-        </div>
-    </div>
-
-    {{-- PERIHAL --}}
-    <div class="meta-row">
-        <div class="meta-label">Perihal</div>
-        <div class="meta-sep">:</div>
-        <div class="meta-val fw-bold">
-            {{ $sp2a->perihal }}
-        </div>
-    </div>
-
-</div>
-
-{{-- ===============================
-   ISI SURAT
-   =============================== --}}
+{{-- ISI SURAT (SOLUSI FINAL UNTUK BORDER mPDF) --}}
 <div class="isi-surat">
-    {!! $sp2a->isi_surat !!}
+    @php
+        $content = $sp2a->isi_surat;
+
+        // 1. HAPUS SEMUA atribut border bawaan editor (seperti border="0" atau style="border:none")
+        // Ini langkah penting agar mPDF tidak bingung.
+        $content = preg_replace('/<table[^>]*>/i', '<table border="1" cellspacing="0" cellpadding="5" style="border-collapse:collapse; width:100%;">', $content);
+
+        // 2. Kita tidak perlu memaksa inject style di TD jika CSS !important sudah kuat,
+        // tapi kita pastikan table tag bersih dari 'border=0'.
+    @endphp
+
+    {!! $content !!}
 </div>
 
-{{-- ===============================
-   TANDA TANGAN
-   =============================== --}}
+{{-- TANDA TANGAN --}}
 <table class="ttd">
     <tr>
         <td width="55%"></td>
@@ -252,9 +216,7 @@
 
             <div style="margin:40px 0 6px 0;">
                 @if($sp2a->current_step == 'finished')
-                    <span class="fw-bold text-uppercase">
-                        APPROVED BY SYSTEM
-                    </span>
+                    <span class="fw-bold text-uppercase">APPROVED BY SYSTEM</span>
                 @else
                     <em>[Menunggu Approval GM]</em>
                 @endif
@@ -268,13 +230,11 @@
     </tr>
 </table>
 
-{{-- ===============================
-   TEMBUSAN
-   =============================== --}}
+{{-- TEMBUSAN --}}
 @if(!empty($sp2a->tembusan))
     <div class="tembusan">
         <p class="fw-bold underline mb-0">Cc:</p>
-        <ol>
+        <ol style="margin-top:0;">
             @foreach($sp2a->tembusan as $cc)
                 <li>{{ $cc }}</li>
             @endforeach
@@ -282,9 +242,7 @@
     </div>
 @endif
 
-{{-- ===============================
-   FOOTER
-   =============================== --}}
+{{-- FOOTER --}}
 <div class="footer">
     Dokumen ini telah ditandatangani secara elektronik.<br>
     ID Dokumen: {{ $sp2a->nomor_sp2a ?? 'DRAFT-'.$sp2a->id }} |
