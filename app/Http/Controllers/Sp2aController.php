@@ -264,36 +264,31 @@ class Sp2aController extends Controller
      * Fitur Download PDF
      */
     public function downloadPdf($id)
-{
-    $sp2a = Sp2a::findOrFail($id);
-    
-    // 1. Render View ke dalam String HTML
-    $html = view('sp2a.pdf', compact('sp2a'))->render();
+    {
+        $sp2a = Sp2a::findOrFail($id);
+        
+        $html = view('sp2a.pdf', compact('sp2a'))->render();
 
-    // 2. Setup mPDF
-    // Format [215, 330] adalah ukuran F4/Folio dalam mm (8.5 x 13 inch)
-    // Sesuai dengan CSS @page kamu sebelumnya.
-    $mpdf = new Mpdf([
-        'mode' => 'utf-8', 
-        'format' => [215, 330], 
-        'orientation' => 'P',
-        'margin_left' => 15,
-        'margin_right' => 15,
-        'margin_top' => 15,
-        'margin_bottom' => 15,
-    ]);
+        // Mengatur ukuran kertas Custom yang lebih lebar
+        // Format F4 Standar: [215, 330]
+        // Kita perlebar menjadi: [230, 330] agar tabel lebih leluasa
+        $mpdf = new Mpdf([
+            'mode' => 'utf-8', 
+            'format' => [230, 330], // [Lebar, Tinggi] dalam mm
+            'orientation' => 'P',
+            'margin_left' => 15,
+            'margin_right' => 15,
+            'margin_top' => 15,
+            'margin_bottom' => 15,
+        ]);
 
-    // 3. Masukkan HTML ke mPDF
-    $mpdf->WriteHTML($html);
+        $mpdf->WriteHTML($html);
 
-    // 4. Generate Nama File
-    $nomorSurat = $sp2a->nomor_sp2a ? str_replace('/', '-', $sp2a->nomor_sp2a) : 'DRAFT';
-    $fileName = 'SP2A_' . $nomorSurat . '.pdf';
+        $nomorSurat = $sp2a->nomor_sp2a ? str_replace('/', '-', $sp2a->nomor_sp2a) : 'DRAFT';
+        $fileName = 'SP2A_' . $nomorSurat . '.pdf';
 
-    // 5. Output Download (D) atau Inline (I)
-    // 'D' akan langsung memaksa browser mendownload file
-    return $mpdf->Output($fileName, \Mpdf\Output\Destination::DOWNLOAD);
-}
+        return $mpdf->Output($fileName, \Mpdf\Output\Destination::DOWNLOAD);
+    }
 
     /**
      * Hapus Dokumen

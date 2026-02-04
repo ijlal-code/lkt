@@ -5,12 +5,17 @@
     <title>SP2A - {{ $sp2a->nomor_sp2a ?? 'DRAFT' }}</title>
 
     <style>
-        /* ===============================
-           PAGE SETUP – F4 / FOLIO
+       /* ===============================
+           PAGE SETUP 
            =============================== */
         @page {
-            size: 215mm 330mm;
-            margin: 20mm;
+            /* Samakan ukuran dengan yang ada di Controller (230mm x 330mm) */
+            size: 230mm 330mm; 
+            
+            /* Margin di sini biasanya akan di-override oleh controller, 
+               tapi baiknya disamakan atau dihapus biar tidak konflik.
+               Kita set 'margin' CSS sedikit lebih kecil agar konten aman. */
+            margin: 15mm; 
         }
 
         body {
@@ -18,6 +23,12 @@
             font-size: 12pt;
             color: #000;
             line-height: 1.6;
+        }
+
+        /* Pastikan tabel tidak dipaksa mengecil, biarkan dia memenuhi lebar */
+        table {
+            width: 100%;
+            border-collapse: collapse;
         }
 
         /* ===============================
