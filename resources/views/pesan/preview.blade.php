@@ -38,7 +38,7 @@
             {{-- Body Panel (Scrollable) --}}
             <div class="p-4 flex-grow-1 overflow-auto custom-scrollbar">
                 
-                {{-- [BARU] Tombol Download Selalu Ada --}}
+                {{-- Tombol Download Selalu Ada --}}
                 <div class="mb-4">
                     <a href="{{ route('pesan.show', $sp2a->id) }}?download=true" class="btn btn-outline-primary w-100 fw-bold shadow-sm">
                         <i class="bi bi-download me-2"></i> Unduh / Simpan PDF
@@ -97,6 +97,10 @@
                     <form action="{{ route('pesan.approve', $sp2a->id) }}" method="POST" id="approvalForm">
                         @csrf
                         
+                        {{-- INPUT HIDDEN UTAMA: --}}
+                        {{-- Secara default disabled. Akan di-enable via JS jika tombol Koreksi diklik --}}
+                        <input type="hidden" name="koreksi" id="input_koreksi" value="true" disabled>
+
                         {{-- Tombol Approve --}}
                         <button type="button" class="btn btn-success w-100 py-2 fw-bold mb-3 shadow-sm btn-approve-trigger">
                             <i class="bi bi-check-lg me-2"></i> SETUJUI DOKUMEN
@@ -109,7 +113,9 @@
                             <label for="catatan_koreksi" class="form-label small fw-bold text-danger">Koreksi / Revisi (Jika ada)</label>
                             <textarea name="catatan_koreksi" id="catatan_koreksi" rows="4" class="form-control form-control-sm" placeholder="Tulis catatan perbaikan untuk Staff..."></textarea>
                         </div>
-                        <button type="submit" name="koreksi" value="true" class="btn btn-outline-danger w-100 btn-sm">
+                        
+                        {{-- Tombol Koreksi (Ubah jadi type="button") --}}
+                        <button type="button" class="btn btn-outline-danger w-100 btn-sm btn-koreksi-trigger">
                             <i class="bi bi-x-circle me-1"></i> Kembalikan untuk Revisi
                         </button>
                     </form>
@@ -121,7 +127,6 @@
                             <strong>Selesai!</strong> Dokumen ini telah disetujui penuh dan didistribusikan.
                         </div>
                     </div>
-                    {{-- Tombol download tambahan di sini opsional, karena sudah ada di atas --}}
                 @else
                     <div class="alert alert-secondary text-center">
                         <i class="bi bi-lock-fill d-block fs-3 mb-2 opacity-50"></i>
@@ -162,6 +167,9 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('approvalForm');
+
+        // --- LOGIKA APPROVE ---
         const approveBtn = document.querySelector('.btn-approve-trigger');
         if(approveBtn) {
             approveBtn.addEventListener('click', function() {
@@ -175,8 +183,49 @@
                     cancelButtonText: 'Batal'
                 }).then((result) => {
                     if (result.isConfirmed) {
+                        // Pastikan input koreksi disabled agar controller masuk ke blok Approve
+                        document.getElementById('input_koreksi').disabled = true;
+                        
                         Swal.fire({title: 'Memproses...', didOpen: () => Swal.showLoading()});
-                        document.getElementById('approvalForm').submit();
+                        form.submit();
+                    }
+                });
+            });
+        }
+
+        // --- LOGIKA KOREKSI (BARU) ---
+        const koreksiBtn = document.querySelector('.btn-koreksi-trigger');
+        if(koreksiBtn) {
+            koreksiBtn.addEventListener('click', function() {
+                // Validasi: Catatan Koreksi Harus Diisi
+                const catatan = document.getElementById('catatan_koreksi').value.trim();
+                
+                if(!catatan) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Catatan Kosong',
+                        text: 'Harap isi catatan koreksi agar Staff tahu apa yang perlu diperbaiki!',
+                        confirmButtonColor: '#dc3545'
+                    });
+                    return; 
+                }
+
+                // Tampilkan Konfirmasi
+                Swal.fire({
+                    title: 'Kembalikan Dokumen?',
+                    text: "Dokumen akan dikembalikan ke status 'Ditolak/Revisi' dan Staff akan menerima notifikasi.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    confirmButtonText: 'Ya, Minta Revisi',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Enable input koreksi agar Controller mendeteksi $request->has('koreksi')
+                        document.getElementById('input_koreksi').disabled = false;
+                        
+                        Swal.fire({title: 'Mengembalikan...', didOpen: () => Swal.showLoading()});
+                        form.submit();
                     }
                 });
             });
