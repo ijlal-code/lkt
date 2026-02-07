@@ -82,10 +82,10 @@
                                 
                                 <td class="pe-4">
                                     <div class="d-flex flex-column gap-2 align-items-center">
-                                        {{-- 1. Tombol LIHAT --}}
-                                        <a href="{{ route('pesan.preview', $p->id) }}" class="btn btn-action-view w-100 py-1 shadow-sm">
-                                            <i class="bi bi-eye me-1"></i> Lihat
-                                        </a>
+                                        {{-- Ubah bagian tombol Lihat --}}
+<a href="{{ route('pesan.preview', $p->id) }}" class="btn btn-action-view w-100 py-1 shadow-sm">
+    <i class="bi bi-eye-fill me-1"></i> Review & Aksi
+</a>
 
                                         {{-- 2. Tombol APPROVE / PDF --}}
                                         @php
@@ -105,12 +105,14 @@
                                                 </button>
                                             </form>
                                         @elseif($isFinalStatus)
+                                            {{-- Jika sudah final, tombol Lihat di atas sudah cukup untuk melihat, 
+                                                 tapi tombol ini download file fisik --}}
                                             <a href="{{ route('pesan.show', $p->id) }}?download=true" class="btn btn-primary fw-bold w-100 py-1 shadow-sm btn-sm">
-                                                <i class="bi bi-download me-1"></i> PDF
+                                                <i class="bi bi-download me-1"></i> Unduh
                                             </a>
                                         @endif
 
-                                        {{-- 3. Tombol HAPUS (BARU) - Khusus Admin & Staff --}}
+                                        {{-- 3. Tombol HAPUS - Khusus Admin & Staff --}}
                                         @if(in_array(Auth::user()->role, ['admin', 'staff']))
                                             <button type="button" class="btn btn-danger w-100 py-1 shadow-sm btn-sm" onclick="confirmDeleteMsg('{{ $p->id }}')">
                                                 <i class="bi bi-trash me-1"></i> Hapus
@@ -146,6 +148,7 @@
     .btn-action-view { 
         background-color: #ffffff; color: #2563eb; border: 1px solid #e2e8f0; 
         border-radius: 6px; font-size: 0.8rem; font-weight: 700; text-align: center; text-decoration: none;
+        transition: all 0.2s;
     }
     .btn-action-view:hover { background-color: #2563eb; color: white; border-color: #2563eb; }
     .btn-sm { font-size: 0.75rem; border-radius: 6px; }
@@ -162,7 +165,7 @@
                 e.preventDefault();
                 const form = this.closest('form');
                 Swal.fire({
-                    title: 'Setujui Dokumen?', text: "Approve langsung dari daftar?", icon: 'question',
+                    title: 'Setujui Dokumen?', text: "Pastikan Anda sudah meninjau dokumen.", icon: 'question',
                     showCancelButton: true, confirmButtonColor: '#198754', confirmButtonText: 'Ya, Approve!', cancelButtonText: 'Batal'
                 }).then((result) => {
                     if (result.isConfirmed) {
@@ -174,7 +177,7 @@
         });
     });
 
-    // Listener untuk tombol Hapus (BARU)
+    // Listener untuk tombol Hapus
     function confirmDeleteMsg(id) {
         Swal.fire({
             title: 'Hapus Dokumen?',
