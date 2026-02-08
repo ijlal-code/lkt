@@ -16,7 +16,7 @@
         body {
             font-family: "Times New Roman", serif;
             font-size: 12pt;
-            line-height: 1.5;
+            line-height: 1.5; /* Untuk paragraf normal */
             color: #000;
         }
 
@@ -49,13 +49,13 @@
             page-break-inside: avoid;
         }
         table.meta td { border: none; padding: 2px 0; vertical-align: top; }
-        
+
         .label { width: 17%; }
         .sep { width: 3%; text-align: center; }
         .val { width: 80%; }
 
         /* ===============================
-           ISI SURAT & TABEL (INTI PERBAIKAN)
+           ISI SURAT
            =============================== */
         .isi-surat {
             text-align: justify;
@@ -66,29 +66,59 @@
             margin: 0 0 10px 0;
         }
 
-        /* 1. Setting Tabel Utama */
+        /* ===============================
+           TABEL (INTI PERBAIKAN)
+           =============================== */
         .isi-surat table {
             width: 100% !important;
-            border-collapse: collapse !important; /* Wajib collapse agar garis menjadi satu (single line) */
-            margin-top: 10px; 
-            margin-bottom: 20px; 
-            
-            /* Logic 1 Tabel 1 Halaman */
-            page-break-inside: avoid; 
+            border-collapse: collapse !important;
+            margin: 10px 0 20px 0;
+            page-break-inside: avoid;
         }
 
-        /* 2. Setting Garis Baris & Sel (Selector Lengkap) */
+        /* Garis tabel */
         .isi-surat table tr,
         .isi-surat table th,
         .isi-surat table td {
-            /* !important untuk menimpa style bawaan editor */
-            border: 1px solid #000 !important; 
-            padding: 6px;
+            border: 1px solid #000 !important;
             vertical-align: top;
             font-size: 12pt;
-            
-            /* Pastikan background tidak menutupi garis */
-            background-clip: padding-box; 
+            background-clip: padding-box;
+        }
+
+        /* ===============================
+           NORMALISASI ISI DALAM TABEL (KUNCI)
+           =============================== */
+
+        /* Line height rapat khusus tabel */
+        .isi-surat table td,
+        .isi-surat table th {
+            line-height: 1.2;
+            padding: 4px 6px; /* atas-bawah diperkecil */
+        }
+
+        /* MATIKAN margin bawaan editor */
+        .isi-surat table td p,
+        .isi-surat table td div {
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Jika editor pakai <br><br> */
+        .isi-surat table td br + br {
+            display: none;
+        }
+
+        /* List di dalam tabel */
+        .isi-surat table td ul,
+        .isi-surat table td ol {
+            margin: 0;
+            padding-left: 16px;
+        }
+
+        .isi-surat table td li {
+            margin: 0;
+            padding: 0;
         }
 
         /* ===============================
@@ -117,19 +147,15 @@
 
 <body>
 
-{{-- KOP SURAT --}}
+{{-- ================= KOP ================= --}}
 <table class="kop">
     <tr>
         <td width="20%">
             <img src="{{ public_path('img/logo-sig.png') }}" style="width:120px;">
         </td>
         <td class="text-center">
-            <div class="fw-bold text-uppercase" style="font-size:15pt;">
-                PT SEMEN TONASA
-            </div>
-            <div class="fw-bold" style="font-size:12pt;">
-                UNIT INTERNAL AUDIT
-            </div>
+            <div class="fw-bold text-uppercase" style="font-size:15pt;">PT SEMEN TONASA</div>
+            <div class="fw-bold" style="font-size:12pt;">UNIT INTERNAL AUDIT</div>
         </td>
         <td width="20%" class="text-right">
             <img src="{{ public_path('img/logo-tonasa.png') }}" style="width:80px;">
@@ -137,14 +163,14 @@
     </tr>
 </table>
 
-{{-- JUDUL --}}
+{{-- ================= JUDUL ================= --}}
 <div class="text-center mb-5">
     <div class="fw-bold underline text-uppercase" style="font-size:14pt; letter-spacing:0.5px;">
         SURAT PERINTAH PELAKSANAAN AUDIT (SP2A)
     </div>
 </div>
 
-{{-- META SURAT --}}
+{{-- ================= META ================= --}}
 <table class="meta">
     <tr>
         <td class="label">Kepada Yth.</td>
@@ -153,7 +179,7 @@
             @php
                 $kepadaList = is_array($sp2a->kepada_nama)
                     ? $sp2a->kepada_nama
-                    : preg_split('/\r\n|\r|\n/', $sp2a->kepada_nama);
+                    : preg_split('/\r\n|\r|\n/', (string)$sp2a->kepada_nama);
             @endphp
             @foreach($kepadaList as $kepada)
                 <div>{{ $kepada }}</div>
@@ -169,11 +195,9 @@
         <td class="label">Nomor</td>
         <td class="sep">:</td>
         <td class="val">
-            @if($sp2a->current_step == 'finished')
-                {{ $sp2a->nomor_sp2a }}
-            @else
-                <em>/SP2A/PW.00/11.00/07-2025</em>
-            @endif
+            {{ $sp2a->current_step == 'finished'
+                ? $sp2a->nomor_sp2a
+                : '/SP2A/PW.00/11.00/07-2025' }}
         </td>
     </tr>
     <tr>
@@ -188,23 +212,23 @@
     </tr>
 </table>
 
-{{-- ISI SURAT (SOLUSI FINAL UNTUK BORDER mPDF) --}}
+{{-- ================= ISI SURAT ================= --}}
 <div class="isi-surat">
-    @php
-        $content = $sp2a->isi_surat;
+@php
+    $content = $sp2a->isi_surat ?? '';
 
-        // 1. HAPUS SEMUA atribut border bawaan editor (seperti border="0" atau style="border:none")
-        // Ini langkah penting agar mPDF tidak bingung.
-        $content = preg_replace('/<table[^>]*>/i', '<table border="1" cellspacing="0" cellpadding="5" style="border-collapse:collapse; width:100%;">', $content);
+    /* Bersihkan atribut tabel bawaan editor */
+    $content = preg_replace(
+        '/<table[^>]*>/i',
+        '<table border="1" cellspacing="0" cellpadding="0" style="border-collapse:collapse;width:100%;">',
+        $content
+    );
+@endphp
 
-        // 2. Kita tidak perlu memaksa inject style di TD jika CSS !important sudah kuat,
-        // tapi kita pastikan table tag bersih dari 'border=0'.
-    @endphp
-
-    {!! $content !!}
+{!! $content !!}
 </div>
 
-{{-- TANDA TANGAN --}}
+{{-- ================= TTD ================= --}}
 <table class="ttd">
     <tr>
         <td width="55%"></td>
@@ -215,11 +239,9 @@
             </p>
 
             <div style="margin:40px 0 6px 0;">
-                @if($sp2a->current_step == 'finished')
-                    <span class="fw-bold text-uppercase">APPROVED BY SYSTEM</span>
-                @else
-                    <em>[Menunggu Approval GM]</em>
-                @endif
+                {!! $sp2a->current_step == 'finished'
+                    ? '<strong>APPROVED BY SYSTEM</strong>'
+                    : '<em>[Menunggu Approval GM]</em>' !!}
             </div>
 
             <p class="fw-bold underline" style="margin-bottom:0;">
@@ -230,19 +252,19 @@
     </tr>
 </table>
 
-{{-- TEMBUSAN --}}
+{{-- ================= TEMBUSAN ================= --}}
 @if(!empty($sp2a->tembusan))
-    <div class="tembusan">
-        <p class="fw-bold underline mb-0">Cc:</p>
-        <ol style="margin-top:0;">
-            @foreach($sp2a->tembusan as $cc)
-                <li>{{ $cc }}</li>
-            @endforeach
-        </ol>
-    </div>
+<div class="tembusan">
+    <p class="fw-bold underline mb-0">Cc:</p>
+    <ol style="margin-top:0;">
+        @foreach($sp2a->tembusan as $cc)
+            <li>{{ $cc }}</li>
+        @endforeach
+    </ol>
+</div>
 @endif
 
-{{-- FOOTER --}}
+{{-- ================= FOOTER ================= --}}
 <div class="footer">
     Dokumen ini telah ditandatangani secara elektronik.<br>
     ID Dokumen: {{ $sp2a->nomor_sp2a ?? 'DRAFT-'.$sp2a->id }} |
