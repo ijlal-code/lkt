@@ -43,10 +43,10 @@
             transition: all 0.25s ease-out;
         }
 
-        /* Styling khusus untuk LOGO ATAS saja */
+        /* Styling LOGO */
         #sidebar-wrapper .sidebar-heading {
-            padding: 1.5rem 1.25rem;
-            font-size: 1.25rem;
+            padding: 1rem;
+            font-size: 1.2rem;
             font-weight: bold;
             background-color: #1a1d20;
             color: #fff;
@@ -54,46 +54,64 @@
             letter-spacing: 1px;
         }
 
-        /* List Group Styling */
+        /* List Group Styling - DIPERBARUI AGAR LEBIH RAPAT */
         #sidebar-wrapper .list-group-item {
             background-color: transparent;
             color: #adb5bd;
             border: none;
-            padding: 12px 20px;
+            /* Mengurangi padding vertikal agar menu lebih rapat */
+            padding: 10px 20px; 
             font-weight: 500;
             transition: all 0.2s;
+            border-left: 3px solid transparent; /* Indikator aktif di kiri */
         }
 
         #sidebar-wrapper .list-group-item:hover {
             background-color: #343a40;
             color: #fff;
             padding-left: 25px;
+            border-left-color: #6c757d;
         }
 
         #sidebar-wrapper .list-group-item.active {
             background-color: #0d6efd;
             color: #fff;
+            border-left-color: white;
         }
 
+        /* Submenu lebih rapat lagi */
         .sidebar-submenu .list-group-item {
             padding-left: 45px !important;
+            padding-top: 8px !important;
+            padding-bottom: 8px !important;
             background-color: #1a1d20 !important;
             font-size: 0.9rem;
+        }
+
+        /* Kategori Menu Text (Kecil) */
+        .sidebar-category-header {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: #6c757d;
+            font-weight: bold;
+            padding: 0 20px;
+            margin-top: 15px; /* Jarak antar grup kategori */
+            margin-bottom: 5px;
         }
 
         /* User Section & Logout at Bottom */
         .sidebar-footer {
             margin-top: auto;
-            padding: 20px;
+            padding: 15px;
             background-color: #1a1d20;
             border-top: 1px solid #343a40;
         }
 
         .user-info {
             background: #2c3034;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 12px;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
         }
 
         /* Main Content Styling */
@@ -104,7 +122,7 @@
             transition: all 0.25s ease-out;
         }
 
-        /* Mobile Adjustments (Hamburger Menu Only on Mobile) */
+        /* Mobile Adjustments */
         .mobile-header {
             display: none;
             background: #fff;
@@ -144,6 +162,12 @@
         #wrapper.toggled .overlay {
             display: block;
         }
+        
+        /* Hilangkan garis biru default browser saat klik */
+        a:focus, button:focus {
+            outline: none;
+            box-shadow: none;
+        }
     </style>
 </head>
 <body>
@@ -156,7 +180,9 @@
                 <i class="bi bi-shield-lock me-2"></i>SISTEM AUDIT
             </div>
             
-            <div class="list-group list-group-flush flex-grow-1 overflow-auto">
+            <div class="list-group list-group-flush flex-grow-1 overflow-auto py-2">
+                
+                {{-- Dashboard selalu paling atas --}}
                 <a href="{{ route('dashboard') }}" class="list-group-item list-group-item-action {{ Request::is('/') ? 'active' : '' }}">
                     <i class="bi bi-speedometer2 me-2"></i> Dashboard
                 </a>
@@ -165,7 +191,8 @@
                     {{-- AREA KHUSUS ADMIN & STAFF --}}
                     @if(in_array(Auth::user()->role, ['admin', 'staff']))
                         
-                        <div class="px-3 mt-3 mb-1 text-uppercase text-muted fw-bold" style="font-size: 0.75rem;">
+                        {{-- Header Kategori disederhanakan --}}
+                        <div class="sidebar-category-header">
                             Menu Operasional
                         </div>
 
@@ -179,26 +206,24 @@
                         </div>
 
                         {{-- Menu SP2A --}}
-<a href="#submenuSP2A" class="list-group-item list-group-item-action dropdown-toggle d-flex justify-content-between align-items-center" data-bs-toggle="collapse">
-    <span><i class="bi bi-exclamation-triangle me-2"></i> SP2A</span>
-</a>
-<div class="collapse sidebar-submenu {{ Request::is('sp2a*') || Request::is('settings*') ? 'show' : '' }}" id="submenuSP2A">
-    <a href="{{ route('sp2a.index') }}" class="list-group-item list-group-item-action {{ Request::is('sp2a') ? 'text-white fw-bold' : '' }}">
-        Daftar SP2A
-    </a>
-    <a href="{{ route('sp2a.create') }}" class="list-group-item list-group-item-action {{ Request::is('sp2a/create') ? 'text-white fw-bold' : '' }}">
-        Buat Baru
-    </a>
-    {{-- Menu Pengaturan diletakkan di dalam submenu agar style padding-nya sama --}}
-    <a href="{{ route('settings.index') }}" class="list-group-item list-group-item-action {{ Request::is('settings*') ? 'text-white fw-bold' : '' }}">
-        Pengaturan
-    </a>
-</div>
+                        <a href="#submenuSP2A" class="list-group-item list-group-item-action dropdown-toggle d-flex justify-content-between align-items-center" data-bs-toggle="collapse">
+                            <span><i class="bi bi-exclamation-triangle me-2"></i> SP2A</span>
+                        </a>
+                        <div class="collapse sidebar-submenu {{ Request::is('sp2a*') || Request::is('settings*') ? 'show' : '' }}" id="submenuSP2A">
+                            <a href="{{ route('sp2a.index') }}" class="list-group-item list-group-item-action {{ Request::is('sp2a') ? 'text-white fw-bold' : '' }}">
+                                Daftar SP2A
+                            </a>
+                            <a href="{{ route('sp2a.create') }}" class="list-group-item list-group-item-action {{ Request::is('sp2a/create') ? 'text-white fw-bold' : '' }}">
+                                Buat Baru
+                            </a>
+                            <a href="{{ route('settings.index') }}" class="list-group-item list-group-item-action {{ Request::is('settings*') ? 'text-white fw-bold' : '' }}">
+                                Pengaturan
+                            </a>
+                        </div>
 
-
-                        {{-- Manajemen User: HANYA ADMIN (Staff tidak melihat ini) --}}
+                        {{-- Manajemen User: HANYA ADMIN --}}
                         @if(Auth::user()->role == 'admin')
-                            <div class="px-3 mt-3 mb-1 text-uppercase text-muted fw-bold" style="font-size: 0.75rem;">
+                            <div class="sidebar-category-header">
                                 Admin Area
                             </div>
                             <a href="{{ route('users.index') }}" class="list-group-item list-group-item-action {{ Request::is('users*') ? 'active' : '' }}">
@@ -208,8 +233,8 @@
 
                     @else
                         {{-- AREA KHUSUS APPROVER (SM, SMQA, GM) --}}
-                        <div class="px-3 mt-3 mb-1 text-uppercase text-muted fw-bold" style="font-size: 0.75rem;">
-                            Menu Personil
+                        <div class="sidebar-category-header">
+                            Personil
                         </div>
 
                         <a href="{{ route('pesan.index') }}" class="list-group-item list-group-item-action {{ Request::is('pesan*') ? 'active' : '' }}">
@@ -217,9 +242,9 @@
                         </a>
                     @endif
 
-                    {{-- Monitoring Section (Bisa dilihat oleh Approver) --}}
+                    {{-- Monitoring Section --}}
                     @if(Auth::check() && in_array(Auth::user()->role, ['sm', 'smqa', 'gm', 'admin']))
-                        <div class="px-3 mt-3 mb-1 text-uppercase text-muted fw-bold" style="font-size: 0.75rem;">
+                        <div class="sidebar-category-header">
                             Monitoring
                         </div>
                         <a class="list-group-item list-group-item-action {{ request()->routeIs('sp2a.history') ? 'active' : '' }}" href="{{ route('sp2a.history') }}">
@@ -231,16 +256,17 @@
 
             @auth
             <div class="sidebar-footer">
-                <div class="user-info shadow-sm">
-                    <div class="small text-muted mb-1">Login sebagai:</div>
-                    <div class="fw-bold text-truncate">{{ Auth::user()->name }}</div>
-                    <span class="badge bg-primary text-uppercase mt-1" style="font-size: 0.65rem;">{{ Auth::user()->role }}</span>
+                <div class="user-info shadow-sm d-flex align-items-center justify-content-between">
+                    <div style="overflow: hidden;">
+                        <div class="fw-bold text-truncate" style="font-size: 0.9rem;">{{ Auth::user()->name }}</div>
+                        <span class="badge bg-primary text-uppercase" style="font-size: 0.6rem;">{{ Auth::user()->role }}</span>
+                    </div>
                 </div>
                 
-                <form action="{{ route('logout') }}" method="POST">
+                <form action="{{ route('logout') }}" method="POST" class="mt-2">
                     @csrf
-                    <button type="submit" class="btn btn-danger btn-sm w-100 py-2 fw-bold">
-                        <i class="bi bi-box-arrow-right me-2"></i> LOGOUT
+                    <button type="submit" class="btn btn-danger btn-sm w-100 fw-bold" style="font-size: 0.85rem;">
+                        <i class="bi bi-box-arrow-right me-1"></i> LOGOUT
                     </button>
                 </form>
             </div>
@@ -249,8 +275,8 @@
 
         <div id="page-content-wrapper">
             <div class="mobile-header">
-                <button class="btn btn-dark" id="sidebarToggle">
-                    <i class="bi bi-list fs-4"></i>
+                <button class="btn btn-dark btn-sm" id="sidebarToggle">
+                    <i class="bi bi-list fs-5"></i>
                 </button>
                 <span class="fw-bold">SP2A APP</span>
                 <div></div> 
@@ -258,16 +284,16 @@
 
             <div class="container-fluid p-4">
                 @if(session('success'))
-                    <div class="alert alert-success alert-dismissible fade show shadow-sm">
+                    <div class="alert alert-success alert-dismissible fade show shadow-sm py-2">
                         <i class="bi bi-check-circle me-2"></i> {{ session('success') }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" style="padding: 1rem;"></button>
                     </div>
                 @endif
 
                 @if(session('error'))
-                    <div class="alert alert-danger alert-dismissible fade show shadow-sm">
+                    <div class="alert alert-danger alert-dismissible fade show shadow-sm py-2">
                         <i class="bi bi-exclamation-triangle me-2"></i> {{ session('error') }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" style="padding: 1rem;"></button>
                     </div>
                 @endif
 
@@ -297,7 +323,6 @@
             }
         });
     </script>
-    {{-- SWEETALERT2 --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>
 </html>
