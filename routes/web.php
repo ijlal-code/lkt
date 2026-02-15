@@ -48,6 +48,7 @@ Route::middleware(['auth'])->group(function () {
 Route::get('ltk/{id}/pdf', [LtkController::class, 'downloadPDF'])->name('ltk.pdf');
 
 
+
     // Resource LTK (Staff juga butuh akses ini)
     Route::resource('ltk', LtkController::class)->except(['destroy']); // Sesuaikan jika staff tidak boleh hapus
 
