@@ -32,6 +32,7 @@ Route::get('/', function () {
 // --- GROUP ADMIN ---
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/home', [HomeController::class, 'index'])->name('home');
+    Route::get('ltk/{id}/pdf', [LtkController::class, 'downloadPDF'])->name('ltk.pdf');
     Route::resource('ltk', LtkController::class);
     Route::resource('contacts', ContactController::class);
     Route::resource('users', UserController::class);
@@ -44,6 +45,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 // --- GROUP INTERNAL / UMUM ---
 Route::middleware(['auth'])->group(function () {
     
+Route::get('ltk/{id}/pdf', [LtkController::class, 'downloadPDF'])->name('ltk.pdf');
     // Resource LTK (Staff juga butuh akses ini)
     Route::resource('ltk', LtkController::class)->except(['destroy']); // Sesuaikan jika staff tidak boleh hapus
 

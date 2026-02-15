@@ -228,29 +228,44 @@
 {!! $content !!}
 </div>
 
-{{-- ================= TTD ================= --}}
-<table class="ttd">
-    <tr>
-        <td width="55%"></td>
-        <td width="45%">
-            <p>
-                Pangkep, {{ \Carbon\Carbon::parse($sp2a->tanggal_surat)->translatedFormat('d F Y') }}<br>
-                Hormat Kami,
-            </p>
+{{-- TANDA TANGAN --}}
+<div class="row mt-5">
+    <div class="col-md-6">
 
-            <div style="margin:40px 0 6px 0;">
-                {!! $sp2a->current_step == 'finished'
-                    ? '<strong>APPROVED BY SYSTEM</strong>'
-                    : '<em>[Menunggu Approval GM]</em>' !!}
+        <p style="margin-bottom: 2px;">
+            Pangkep, {{ \Carbon\Carbon::parse($sp2a->tanggal_surat)->translatedFormat('d F Y') }}
+        </p>
+        <p style="margin-bottom: 0;">
+            Hormat Kami,
+        </p>
+
+        {{-- Spasi untuk ruang tanda tangan --}}
+        <div style="height: 80px;"></div>
+
+        {{-- Status Approval --}}
+        @if($sp2a->current_step == 'finished')
+            <div style="margin-bottom: 5px;">
+                <span style="font-weight: bold; font-size: 11px;">
+                    APPROVED BY SYSTEM
+                </span>
             </div>
+        @else
+            <div style="margin-bottom: 5px;">
+                <em style="font-size: 10px; color: #666;">
+                    [Menunggu Approval GM]
+                </em>
+            </div>
+        @endif
 
-            <p class="fw-bold underline" style="margin-bottom:0;">
-                {{ $sp2a->penanda_tangan_nama }}
-            </p>
-            <p>GM Internal Audit</p>
-        </td>
-    </tr>
-</table>
+        {{-- Nama --}}
+        <p style="font-weight: bold; text-decoration: underline; margin: 0;">
+            {{ $sp2a->penanda_tangan_nama }}
+        </p>
+        <p style="margin: 0;">GM Internal Audit</p>
+
+    </div>
+</div>
+
 
 {{-- ================= TEMBUSAN ================= --}}
 @if(!empty($sp2a->tembusan))
